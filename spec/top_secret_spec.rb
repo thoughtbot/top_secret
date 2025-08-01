@@ -11,12 +11,14 @@ RSpec.describe TopSecret::Text do
     it "filters sensitive information from free text" do
       input = <<~TEXT
         My email address is user@example.com
+        My credit card numbers are 4242-4242-4242-4242 and 4141414141414141
       TEXT
 
       result = TopSecret::Text.filter(input)
 
       expect(result.output).to eq(<<~TEXT)
         My email address is [EMAIL_1]
+        My credit card numbers are [CREDIT_CARD_1] and [CREDIT_CARD_2]
       TEXT
       expect(result.input).to eq(input)
     end
@@ -25,6 +27,12 @@ RSpec.describe TopSecret::Text do
       result = TopSecret::Text.filter("user@example.com")
 
       expect(result.output).to eq("[EMAIL_1]")
+    end
+
+    it "filters delimited credit cards numbers from free text" do
+      result = TopSecret::Text.filter("4242-4242-4242-4242")
+
+      expect(result.output).to eq("[CREDIT_CARD_1]")
     end
 
     it "returns a TopSecret::Result" do
@@ -46,6 +54,54 @@ RSpec.describe TopSecret::Text do
         result = TopSecret::Text.filter("user_1@example.com user_1@example.com")
 
         expect(result.output).to eq("[EMAIL_1] [EMAIL_1]")
+      end
+    end
+
+    context "when there are multiple unique credit card numbers" do
+      it "filters each credit card number from free text" do
+        input = <<~TEXT
+          4242-4242-4242-4242
+          4141-4141-4141-4141
+          4242424242424242
+          4141414141414141
+        TEXT
+
+        result = TopSecret::Text.filter(input)
+
+        expect(result.output).to eq(<<~TEXT)
+          [CREDIT_CARD_1]
+          [CREDIT_CARD_2]
+          [CREDIT_CARD_3]
+          [CREDIT_CARD_4]
+        TEXT
+      end
+    end
+
+    context "when there are multiple identical credit card numbers" do
+      it "filters each credit card number from free text, and maps to the same filter" do
+        input = <<~TEXT
+          4242-4242-4242-4242
+          4242-4242-4242-4242
+          4141-4141-4141-4141
+          4141-4141-4141-4141
+          4242424242424242
+          4242424242424242
+          4141414141414141
+          4141414141414141
+        TEXT
+
+        result = TopSecret::Text.filter(input)
+
+        expect(result.output).to eq(<<~TEXT)
+          [CREDIT_CARD_1]
+          [CREDIT_CARD_1]
+          [CREDIT_CARD_2]
+          [CREDIT_CARD_2]
+          [CREDIT_CARD_3]
+          [CREDIT_CARD_3]
+          [CREDIT_CARD_4]
+          [CREDIT_CARD_4]
+        TEXT
       end
     end
   end
