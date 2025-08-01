@@ -12,7 +12,7 @@ input = <<~TEXT
 TEXT
 
 result = TopSecret::Text.filter(input)
-=> #<TopSecret::Result>
+=> TopSecret::Result
 
 result.output
 => "My email address is [EMAIL_1]\n" \
@@ -22,12 +22,12 @@ result.output
 
 result.mapping
 => {
-  CREDIT_CARD_1: "4242-4242-4242-4242",
-  CREDIT_CARD_2: "4141414141414141",
-  EMAIL_1: "user@example.com",
-  PHONE_NUMBER_1: "555-555-5555",
-  SSN_1: "123-45-6789"
-}
+     CREDIT_CARD_1: "4242-4242-4242-4242",
+     CREDIT_CARD_2: "4141414141414141",
+     EMAIL_1: "user@example.com",
+     PHONE_NUMBER_1: "555-555-5555",
+     SSN_1: "123-45-6789"
+   }
 ```
 
 ## Installation
