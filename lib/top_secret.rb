@@ -22,7 +22,6 @@ module TopSecret
 
     def initialize(input)
       @input = input
-      @output = input.dup
     end
 
     def self.filter(input)
@@ -30,7 +29,7 @@ module TopSecret
     end
 
     def filter
-      output = DEFAULT_FILTERS.reduce(input.dup) do |input, params|
+      @output = DEFAULT_FILTERS.reduce(input.dup) do |input, params|
         Filter::Regex.new(input:, **params).filter
       end
 
@@ -39,7 +38,7 @@ module TopSecret
 
     private
 
-    attr_reader :input
+    attr_reader :input, :output
   end
 
   class Result
