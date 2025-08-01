@@ -14,10 +14,7 @@ module TopSecret
 
   class Text
     DEFAULT_FILTERS = [
-      {label: "CREDIT_CARD", regex: [
-        CREDIT_CARD_REGEX_DELIMITERS,
-        CREDIT_CARD_REGEX
-      ]},
+      {label: "CREDIT_CARD", regex: [CREDIT_CARD_REGEX_DELIMITERS, CREDIT_CARD_REGEX]},
       {label: "EMAIL", regex: EMAIL_REGEX},
       {label: "PHONE_NUMBER", regex: PHONE_REGEX},
       {label: "SSN", regex: SSN_REGEX}
