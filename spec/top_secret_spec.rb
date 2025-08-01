@@ -12,6 +12,7 @@ RSpec.describe TopSecret::Text do
       input = <<~TEXT
         My email address is user@example.com
         My credit card numbers are 4242-4242-4242-4242 and 4141414141414141
+        My social security number is 123-45-6789
       TEXT
 
       result = TopSecret::Text.filter(input)
@@ -19,6 +20,7 @@ RSpec.describe TopSecret::Text do
       expect(result.output).to eq(<<~TEXT)
         My email address is [EMAIL_1]
         My credit card numbers are [CREDIT_CARD_1] and [CREDIT_CARD_2]
+        My social security number is [SSN_1]
       TEXT
       expect(result.input).to eq(input)
     end
@@ -39,6 +41,12 @@ RSpec.describe TopSecret::Text do
       result = TopSecret::Text.filter("4242424242424242")
 
       expect(result.output).to eq("[CREDIT_CARD_1]")
+    end
+
+    it "filters social security numbers from free text" do
+      result = TopSecret::Text.filter("123-45-6789")
+
+      expect(result.output).to eq("[SSN_1]")
     end
 
     it "returns a TopSecret::Result" do
@@ -108,6 +116,22 @@ RSpec.describe TopSecret::Text do
           [CREDIT_CARD_4]
           [CREDIT_CARD_4]
         TEXT
+      end
+    end
+
+    context "when there are multiple unique social security numbers" do
+      it "filters each social security number from free text" do
+        result = TopSecret::Text.filter("123-45-6789 000-00-0000")
+
+        expect(result.output).to eq("[SSN_1] [SSN_2]")
+      end
+    end
+
+    context "when there are multiple identical social security numbers" do
+      it "filters each social security number from free text, and maps them to the same filter" do
+        result = TopSecret::Text.filter("123-45-6789 123-45-6789")
+
+        expect(result.output).to eq("[SSN_1] [SSN_1]")
       end
     end
   end

@@ -7,6 +7,7 @@ module TopSecret
   CREDIT_CARD_REGEX_DELIMITERS = /\b[3456]\d{3}[\s+-]\d{4}[\s+-]\d{4}[\s+-]\d{4}\b/
   # Modified from URI::MailTo::EMAIL_REGEXP
   EMAIL_REGEX = %r{[a-zA-Z0-9.!\#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*}
+  SSN_REGEX = /\b\d{3}[\s+-]\d{2}[\s+-]\d{4}\b/
 
   class Error < StandardError; end
 
@@ -23,6 +24,7 @@ module TopSecret
     def filter
       emails = input.scan(EMAIL_REGEX)
       credit_cards = input.scan(CREDIT_CARD_REGEX_DELIMITERS) + input.scan(CREDIT_CARD_REGEX)
+      ssns = input.scan(SSN_REGEX)
 
       emails.uniq.each.with_index(1) do |email, index|
         filter = "EMAIL_#{index}"
@@ -32,6 +34,11 @@ module TopSecret
       credit_cards.uniq.each.with_index(1) do |credit_card, index|
         filter = "CREDIT_CARD_#{index}"
         output.gsub! credit_card, "[#{filter}]"
+      end
+
+      ssns.each.with_index(1) do |ssn, index|
+        filter = "SSN_#{index}"
+        output.gsub! ssn, "[#{filter}]"
       end
 
       Result.new(input, output)
