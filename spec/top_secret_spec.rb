@@ -24,7 +24,7 @@ end
 
 RSpec.describe TopSecret::Text do
   describe ".filter" do
-    it "filters sensitive information from free text" do
+    it "filters sensitive information from free text and creates a mapping" do
       input = <<~TEXT
         My email address is user@example.com
         My credit card numbers are 4242-4242-4242-4242 and 4141414141414141
@@ -40,7 +40,22 @@ RSpec.describe TopSecret::Text do
         My social security number is [SSN_1]
         My phone number is [PHONE_NUMBER_1]
       TEXT
+      expect(result.mapping).to eq({
+        EMAIL_1: "user@example.com",
+        CREDIT_CARD_1: "4242-4242-4242-4242",
+        CREDIT_CARD_2: "4141414141414141",
+        SSN_1: "123-45-6789",
+        PHONE_NUMBER_1: "555-555-5555"
+      })
       expect(result.input).to eq(input)
+    end
+
+    it "removes duplicate entries from the mapping" do
+      result = TopSecret::Text.filter("user@example.com user@example.com")
+
+      expect(result.mapping).to eq({
+        EMAIL_1: "user@example.com"
+      })
     end
 
     it "filters email addresses from free text" do
