@@ -29,24 +29,26 @@ module TopSecret
     end
 
     def filter
-      @output = DEFAULT_FILTERS.reduce(input.dup) do |input, params|
-        Filter::Regex.new(input:, **params).filter
+      @output, @mapping = DEFAULT_FILTERS.reduce([input.dup, {}]) do |(input, accumulated_mapping), params|
+        filtered, mapping = Filter::Regex.new(input:, **params).filter
+        [filtered, accumulated_mapping.merge(mapping)]
       end
 
-      Result.new(input, output)
+      Result.new(input, output, mapping)
     end
 
     private
 
-    attr_reader :input, :output
+    attr_reader :input, :output, :mapping
   end
 
   class Result
-    attr_reader :input, :output
+    attr_reader :input, :output, :mapping
 
-    def initialize(input, output)
+    def initialize(input, output, mapping)
       @input = input
       @output = output
+      @mapping = mapping
     end
   end
 
@@ -63,12 +65,15 @@ module TopSecret
       def filter
         values = regex.flat_map { input.scan(_1) }
 
+        mapping = {}
+
         values.uniq.each.with_index(1) do |value, index|
           filter = "#{label}_#{index}"
           input.gsub! value, "[#{filter}]"
+          mapping[filter.to_sym] = value
         end
 
-        input
+        [input, mapping]
       end
     end
   end
