@@ -12,7 +12,7 @@ input = <<~TEXT
 TEXT
 
 result = TopSecret::Text.filter(input)
-=> TopSecret::Result
+=> #<TopSecret::Result>
 
 result.output
 => "My email address is [EMAIL_1]\n" \
