@@ -1,8 +1,34 @@
 # TopSecret
 
-TODO: Delete this and the text below, and describe your gem
+Filter sensitive information from free text before sending it to external
+services or APIs, such as Chatbots.
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/top_secret`. To experiment with that code, run `bin/console` for an interactive prompt.
+```ruby
+input = <<~TEXT
+  My email address is user@example.com
+  My credit card numbers are 4242-4242-4242-4242 and 4141414141414141
+  My social security number is 123-45-6789
+  My phone number is 555-555-5555
+TEXT
+
+result = TopSecret::Text.filter(input)
+# => #<TopSecret::Result>
+
+result.output
+# => "My email address is [EMAIL_1]\n" \
+     "My credit card numbers are [CREDIT_CARD_1] and [CREDIT_CARD_2]\n" \
+     "My social security number is [SSN_1]\n" \
+     "My phone number is [PHONE_NUMBER_1]\n"
+
+result.mapping
+# => {
+  CREDIT_CARD_1: "4242-4242-4242-4242",
+  CREDIT_CARD_2: "4141414141414141",
+  EMAIL_1: "user@example.com",
+  PHONE_NUMBER_1: "555-555-5555",
+  SSN_1: "123-45-6789"
+}
+```
 
 ## Installation
 
