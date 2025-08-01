@@ -6,6 +6,22 @@ RSpec.describe TopSecret do
   end
 end
 
+RSpec.describe "TopSecret::PHONE_REGEX" do
+  phone_numbers = [
+    "+1 415-555-1234",
+    "(415) 555-1234",
+    "415.555.1234",
+    "415 555 1234",
+    "415-555-1234"
+  ]
+
+  phone_numbers.each do |phone_number|
+    it "matches #{phone_number}" do
+      expect(phone_number).to match(TopSecret::PHONE_REGEX)
+    end
+  end
+end
+
 RSpec.describe TopSecret::Text do
   describe ".filter" do
     it "filters sensitive information from free text" do
@@ -13,6 +29,7 @@ RSpec.describe TopSecret::Text do
         My email address is user@example.com
         My credit card numbers are 4242-4242-4242-4242 and 4141414141414141
         My social security number is 123-45-6789
+        My phone number is 555-555-5555
       TEXT
 
       result = TopSecret::Text.filter(input)
@@ -21,6 +38,7 @@ RSpec.describe TopSecret::Text do
         My email address is [EMAIL_1]
         My credit card numbers are [CREDIT_CARD_1] and [CREDIT_CARD_2]
         My social security number is [SSN_1]
+        My phone number is [PHONE_NUMBER_1]
       TEXT
       expect(result.input).to eq(input)
     end
@@ -47,6 +65,12 @@ RSpec.describe TopSecret::Text do
       result = TopSecret::Text.filter("123-45-6789")
 
       expect(result.output).to eq("[SSN_1]")
+    end
+
+    it "filters phone numbers from free text" do
+      result = TopSecret::Text.filter("555-555-5555")
+
+      expect(result.output).to eq("[PHONE_NUMBER_1]")
     end
 
     it "returns a TopSecret::Result" do
@@ -132,6 +156,22 @@ RSpec.describe TopSecret::Text do
         result = TopSecret::Text.filter("123-45-6789 123-45-6789")
 
         expect(result.output).to eq("[SSN_1] [SSN_1]")
+      end
+    end
+
+    context "when there are multiple unique phone numbers" do
+      it "filters each phone number from free text" do
+        result = TopSecret::Text.filter("555-555-5555 444-444-4444")
+
+        expect(result.output).to eq("[PHONE_NUMBER_1] [PHONE_NUMBER_2]")
+      end
+    end
+
+    context "when there are multiple identical phone numbers" do
+      it "filters each phone number from free text, and maps them to the same filter" do
+        result = TopSecret::Text.filter("555-555-5555 555-555-5555")
+
+        expect(result.output).to eq("[PHONE_NUMBER_1] [PHONE_NUMBER_1]")
       end
     end
   end
