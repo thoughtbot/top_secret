@@ -12,16 +12,16 @@ input = <<~TEXT
 TEXT
 
 result = TopSecret::Text.filter(input)
-# => #<TopSecret::Result>
+=> #<TopSecret::Result>
 
 result.output
-# => "My email address is [EMAIL_1]\n" \
-     "My credit card numbers are [CREDIT_CARD_1] and [CREDIT_CARD_2]\n" \
-     "My social security number is [SSN_1]\n" \
-     "My phone number is [PHONE_NUMBER_1]\n"
+=> "My email address is [EMAIL_1]\n" \
+   "My credit card numbers are [CREDIT_CARD_1] and [CREDIT_CARD_2]\n" \
+   "My social security number is [SSN_1]\n" \
+   "My phone number is [PHONE_NUMBER_1]\n"
 
 result.mapping
-# => {
+=> {
   CREDIT_CARD_1: "4242-4242-4242-4242",
   CREDIT_CARD_2: "4141414141414141",
   EMAIL_1: "user@example.com",
