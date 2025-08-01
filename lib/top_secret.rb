@@ -13,6 +13,13 @@ module TopSecret
   class Error < StandardError; end
 
   class Text
+    DEFAULT_FILTERS = [
+      {label: "CREDIT_CARD", regex: [CREDIT_CARD_REGEX_DELIMITERS, CREDIT_CARD_REGEX]},
+      {label: "EMAIL", regex: EMAIL_REGEX},
+      {label: "PHONE_NUMBER", regex: PHONE_REGEX},
+      {label: "SSN", regex: SSN_REGEX}
+    ].freeze
+
     def initialize(input)
       @input = input
       @output = input.dup
@@ -23,29 +30,8 @@ module TopSecret
     end
 
     def filter
-      emails = input.scan(EMAIL_REGEX)
-      credit_cards = input.scan(CREDIT_CARD_REGEX_DELIMITERS) + input.scan(CREDIT_CARD_REGEX)
-      ssns = input.scan(SSN_REGEX)
-      phone_numbers = input.scan(PHONE_REGEX)
-
-      emails.uniq.each.with_index(1) do |email, index|
-        filter = "EMAIL_#{index}"
-        output.gsub! email, "[#{filter}]"
-      end
-
-      credit_cards.uniq.each.with_index(1) do |credit_card, index|
-        filter = "CREDIT_CARD_#{index}"
-        output.gsub! credit_card, "[#{filter}]"
-      end
-
-      ssns.each.with_index(1) do |ssn, index|
-        filter = "SSN_#{index}"
-        output.gsub! ssn, "[#{filter}]"
-      end
-
-      phone_numbers.each.with_index(1) do |phone_number, index|
-        filter = "PHONE_NUMBER_#{index}"
-        output.gsub! phone_number, "[#{filter}]"
+      output = DEFAULT_FILTERS.reduce(input.dup) do |input, params|
+        Filter::Regex.new(input:, **params).filter
       end
 
       Result.new(input, output)
@@ -53,7 +39,7 @@ module TopSecret
 
     private
 
-    attr_reader :output, :input
+    attr_reader :input
   end
 
   class Result
@@ -62,6 +48,29 @@ module TopSecret
     def initialize(input, output)
       @input = input
       @output = output
+    end
+  end
+
+  module Filter
+    class Regex
+      attr_reader :label, :input, :regex
+
+      def initialize(label:, input:, regex:)
+        @label = label
+        @input = input
+        @regex = Array(regex)
+      end
+
+      def filter
+        values = regex.flat_map { input.scan(_1) }
+
+        values.uniq.each.with_index(1) do |value, index|
+          filter = "#{label}_#{index}"
+          input.gsub! value, "[#{filter}]"
+        end
+
+        input
+      end
     end
   end
 end
