@@ -29,8 +29,14 @@ RSpec.describe TopSecret::Text do
       expect(result.output).to eq("[EMAIL_1]")
     end
 
-    it "filters delimited credit cards numbers from free text" do
+    it "filters delimited credit card numbers from free text" do
       result = TopSecret::Text.filter("4242-4242-4242-4242")
+
+      expect(result.output).to eq("[CREDIT_CARD_1]")
+    end
+
+    it "filters non-delimited credit card numbers from free text" do
+      result = TopSecret::Text.filter("4242424242424242")
 
       expect(result.output).to eq("[CREDIT_CARD_1]")
     end
