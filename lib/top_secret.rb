@@ -13,6 +13,16 @@ module TopSecret
   class Error < StandardError; end
 
   class Text
+    DEFAULT_FILTERS = [
+      {label: "CREDIT_CARD", regex: [
+        CREDIT_CARD_REGEX_DELIMITERS,
+        CREDIT_CARD_REGEX
+      ]},
+      {label: "EMAIL", regex: EMAIL_REGEX},
+      {label: "PHONE_NUMBER", regex: PHONE_REGEX},
+      {label: "SSN", regex: SSN_REGEX}
+    ].freeze
+
     def initialize(input)
       @input = input
       @output = input.dup
@@ -23,13 +33,9 @@ module TopSecret
     end
 
     def filter
-      TopSecret::Filter::Regex.new(label: "CREDIT_CARD", regex: [
-        CREDIT_CARD_REGEX_DELIMITERS,
-        CREDIT_CARD_REGEX
-      ], input: output).filter
-      TopSecret::Filter::Regex.new(label: "EMAIL", regex: EMAIL_REGEX, input: output).filter
-      TopSecret::Filter::Regex.new(label: "PHONE_NUMBER", regex: PHONE_REGEX, input: output).filter
-      TopSecret::Filter::Regex.new(label: "SSN", regex: SSN_REGEX, input: output).filter
+      output = DEFAULT_FILTERS.reduce(input.dup) do |input, params|
+        Filter::Regex.new(input:, **params).filter
+      end
 
       Result.new(input, output)
     end
