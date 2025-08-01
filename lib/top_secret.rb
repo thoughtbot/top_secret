@@ -23,37 +23,21 @@ module TopSecret
     end
 
     def filter
-      emails = input.scan(EMAIL_REGEX)
-      credit_cards = input.scan(CREDIT_CARD_REGEX_DELIMITERS) + input.scan(CREDIT_CARD_REGEX)
-      ssns = input.scan(SSN_REGEX)
-      phone_numbers = input.scan(PHONE_REGEX)
-
-      emails.uniq.each.with_index(1) do |email, index|
-        filter = "EMAIL_#{index}"
-        output.gsub! email, "[#{filter}]"
-      end
-
-      credit_cards.uniq.each.with_index(1) do |credit_card, index|
-        filter = "CREDIT_CARD_#{index}"
-        output.gsub! credit_card, "[#{filter}]"
-      end
-
-      ssns.each.with_index(1) do |ssn, index|
-        filter = "SSN_#{index}"
-        output.gsub! ssn, "[#{filter}]"
-      end
-
-      phone_numbers.each.with_index(1) do |phone_number, index|
-        filter = "PHONE_NUMBER_#{index}"
-        output.gsub! phone_number, "[#{filter}]"
-      end
+      TopSecret::Filter::Regex.new(label: "CREDIT_CARD", regex: [
+        CREDIT_CARD_REGEX_DELIMITERS,
+        CREDIT_CARD_REGEX
+      ], input: output).filter
+      TopSecret::Filter::Regex.new(label: "EMAIL", regex: EMAIL_REGEX, input: output).filter
+      TopSecret::Filter::Regex.new(label: "PHONE_NUMBER", regex: PHONE_REGEX, input: output).filter
+      TopSecret::Filter::Regex.new(label: "SSN", regex: SSN_REGEX, input: output).filter
 
       Result.new(input, output)
     end
 
     private
 
-    attr_reader :output, :input
+    attr_reader :input
+    attr_accessor :output
   end
 
   class Result
@@ -62,6 +46,29 @@ module TopSecret
     def initialize(input, output)
       @input = input
       @output = output
+    end
+  end
+
+  module Filter
+    class Regex
+      attr_reader :label, :input, :regex
+
+      def initialize(label:, input:, regex:)
+        @label = label
+        @input = input
+        @regex = Array(regex)
+      end
+
+      def filter
+        values = regex.flat_map { input.scan(_1) }
+
+        values.uniq.each.with_index(1) do |value, index|
+          filter = "#{label}_#{index}"
+          input.gsub! value, "[#{filter}]"
+        end
+
+        input
+      end
     end
   end
 end
