@@ -40,7 +40,6 @@ module TopSecret
     private
 
     attr_reader :input
-    attr_accessor :output
   end
 
   class Result
