@@ -2,6 +2,7 @@ PATH
   remote: .
   specs:
     top_secret (0.1.0)
+      mitie (~> 0.3.2)
 
 GEM
   remote: https://rubygems.org/
@@ -10,6 +11,7 @@ GEM
     date (3.4.1)
     diff-lcs (1.6.2)
     erb (5.0.2)
+    fiddle (1.1.8)
     io-console (0.8.1)
     irb (1.15.2)
       pp (>= 0.6.0)
@@ -18,6 +20,8 @@ GEM
     json (2.13.2)
     language_server-protocol (3.17.0.5)
     lint_roller (1.1.0)
+    mitie (0.3.2)
+      fiddle
     parallel (1.27.0)
     parser (3.3.9.0)
       ast (~> 2.4.1)

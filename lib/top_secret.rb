@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "top_secret/version"
+require "mitie"
 
 module TopSecret
   CREDIT_CARD_REGEX = /\b[3456]\d{15}\b/
@@ -9,6 +10,8 @@ module TopSecret
   EMAIL_REGEX = %r{[a-zA-Z0-9.!\#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*}
   PHONE_REGEX = /\b(?:\+\d{1,2}\s)?\(?\d{3}\)?[\s+.-]\d{3}[\s+.-]\d{4}\b/
   SSN_REGEX = /\b\d{3}[\s+-]\d{2}[\s+-]\d{4}\b/
+  # TODO Make this configurable
+  MIN_CONFIDENCE_SCORE = 0.5
 
   class Error < StandardError; end
 
@@ -17,6 +20,11 @@ module TopSecret
       @input = input
       @output = input.dup
       @mapping = {}
+
+      # TODO Make this configurable
+      @model = Mitie::NER.new("ner_model.dat")
+      @doc = @model.doc(@output)
+      @entities = @doc.entities
     end
 
     def self.filter(input)
@@ -28,6 +36,7 @@ module TopSecret
       build_mapping(emails, label: "EMAIL")
       build_mapping(phone_numbers, label: "PHONE_NUMBER")
       build_mapping(ssns, label: "SSN")
+      build_mapping(people, label: "PERSON")
       substitute_text
 
       Result.new(input, output, mapping)
@@ -35,7 +44,7 @@ module TopSecret
 
     private
 
-    attr_reader :input, :output, :mapping
+    attr_reader :input, :output, :mapping, :entities
 
     def build_mapping(values, label:)
       values.uniq.each.with_index(1) do |value, index|
@@ -64,6 +73,11 @@ module TopSecret
 
     def ssns
       input.scan(SSN_REGEX)
+    end
+
+    def people
+      tags = entities.filter { _1.fetch(:tag) == "PERSON" && _1.fetch(:score) >= MIN_CONFIDENCE_SCORE }
+      tags.map { _1.fetch(:text) }
     end
   end
 

@@ -24,8 +24,14 @@ end
 
 RSpec.describe TopSecret::Text do
   describe ".filter" do
+    before do
+      ralph = build_entity(text: "Ralph", tag: :person)
+      stub_ner_entities(ralph)
+    end
+
     it "filters sensitive information from free text and creates a mapping" do
       input = <<~TEXT
+        My name is Ralph
         My email address is user@example.com
         My credit card numbers are 4242-4242-4242-4242 and 4141414141414141
         My social security number is 123-45-6789
@@ -35,6 +41,7 @@ RSpec.describe TopSecret::Text do
       result = TopSecret::Text.filter(input)
 
       expect(result.output).to eq(<<~TEXT)
+        My name is [PERSON_1]
         My email address is [EMAIL_1]
         My credit card numbers are [CREDIT_CARD_1] and [CREDIT_CARD_2]
         My social security number is [SSN_1]
@@ -45,7 +52,8 @@ RSpec.describe TopSecret::Text do
         CREDIT_CARD_1: "4242-4242-4242-4242",
         CREDIT_CARD_2: "4141414141414141",
         SSN_1: "123-45-6789",
-        PHONE_NUMBER_1: "555-555-5555"
+        PHONE_NUMBER_1: "555-555-5555",
+        PERSON_1: "Ralph"
       })
       expect(result.input).to eq(input)
     end
@@ -53,9 +61,7 @@ RSpec.describe TopSecret::Text do
     it "removes duplicate entries from the mapping" do
       result = TopSecret::Text.filter("user@example.com user@example.com")
 
-      expect(result.mapping).to eq({
-        EMAIL_1: "user@example.com"
-      })
+      expect(result.mapping.fetch(:EMAIL_1)).to eq("user@example.com")
     end
 
     it "filters email addresses from free text" do
@@ -86,6 +92,12 @@ RSpec.describe TopSecret::Text do
       result = TopSecret::Text.filter("555-555-5555")
 
       expect(result.output).to eq("[PHONE_NUMBER_1]")
+    end
+
+    it "filters names from free text" do
+      result = TopSecret::Text.filter("Ralph")
+
+      expect(result.output).to eq("[PERSON_1]")
     end
 
     it "returns a TopSecret::Result" do
@@ -189,5 +201,60 @@ RSpec.describe TopSecret::Text do
         expect(result.output).to eq("[PHONE_NUMBER_1] [PHONE_NUMBER_1]")
       end
     end
+
+    context "when there are multiple unique people" do
+      before do
+        ralph = build_entity(text: "Ralph", tag: :person)
+        ruby = build_entity(text: "Ruby", tag: :person)
+        stub_ner_entities(ralph, ruby)
+      end
+
+      it "filters each person from free text" do
+        result = TopSecret::Text.filter("Ralph Ruby")
+
+        expect(result.output).to eq("[PERSON_1] [PERSON_2]")
+      end
+    end
+
+    context "when there are multiple identical people" do
+      before do
+        ralph_1 = build_entity(text: "Ralph", tag: :person)
+        ralph_2 = build_entity(text: "Ralph", tag: :person)
+        stub_ner_entities(ralph_1, ralph_2)
+      end
+
+      it "filters each person from free text, and maps them to the same filter" do
+        result = TopSecret::Text.filter("Ralph Ralph")
+
+        expect(result.output).to eq("[PERSON_1] [PERSON_1]")
+      end
+    end
+
+    context "when the confidence score is below the threshold for a person" do
+      before do
+        score = TopSecret::MIN_CONFIDENCE_SCORE - 0.1
+        ralph = build_entity(text: "Ralph", tag: :person, score:)
+        stub_ner_entities(ralph)
+      end
+
+      it "does not filter the person from free text" do
+        result = TopSecret::Text.filter("Ralph")
+
+        expect(result.output).to eq("Ralph")
+      end
+    end
+  end
+
+  private
+
+  def build_entity(text:, tag:, score: TopSecret::MIN_CONFIDENCE_SCORE)
+    {text:, tag: tag.to_s.upcase, score:}
+  end
+
+  def stub_ner_entities(*entities)
+    doc = instance_double("Mitie::Document", entities:)
+    ner = instance_double("Mitie::NER", doc:)
+
+    stub_const("Mitie::NER", class_double("Mitie::NER", new: ner))
   end
 end
