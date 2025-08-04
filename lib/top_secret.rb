@@ -13,15 +13,10 @@ module TopSecret
   class Error < StandardError; end
 
   class Text
-    DEFAULT_FILTERS = [
-      {label: "CREDIT_CARD", regex: [CREDIT_CARD_REGEX_DELIMITERS, CREDIT_CARD_REGEX]},
-      {label: "EMAIL", regex: EMAIL_REGEX},
-      {label: "PHONE_NUMBER", regex: PHONE_REGEX},
-      {label: "SSN", regex: SSN_REGEX}
-    ].freeze
-
     def initialize(input)
       @input = input
+      @output = input.dup
+      @mapping = {}
     end
 
     def self.filter(input)
@@ -29,10 +24,11 @@ module TopSecret
     end
 
     def filter
-      @output, @mapping = DEFAULT_FILTERS.reduce([input.dup, {}]) do |(input, accumulated_mapping), params|
-        filtered, mapping = Filter::Regex.new(input:, **params).filter
-        [filtered, accumulated_mapping.merge(mapping)]
-      end
+      build_mapping(credit_cards, label: "CREDIT_CARD")
+      build_mapping(emails, label: "EMAIL")
+      build_mapping(phone_numbers, label: "PHONE_NUMBER")
+      build_mapping(ssns, label: "SSN")
+      substitute_text
 
       Result.new(input, output, mapping)
     end
@@ -40,6 +36,35 @@ module TopSecret
     private
 
     attr_reader :input, :output, :mapping
+
+    def build_mapping(values, label:)
+      values.uniq.each.with_index(1) do |value, index|
+        filter = "#{label}_#{index}"
+        mapping.merge!({filter.to_sym => value})
+      end
+    end
+
+    def substitute_text
+      mapping.each do |filter, value|
+        output.gsub! value, "[#{filter}]"
+      end
+    end
+
+    def credit_cards
+      input.scan(CREDIT_CARD_REGEX_DELIMITERS) + input.scan(CREDIT_CARD_REGEX)
+    end
+
+    def emails
+      input.scan(EMAIL_REGEX)
+    end
+
+    def phone_numbers
+      input.scan(PHONE_REGEX)
+    end
+
+    def ssns
+      input.scan(SSN_REGEX)
+    end
   end
 
   class Result
@@ -49,32 +74,6 @@ module TopSecret
       @input = input
       @output = output
       @mapping = mapping
-    end
-  end
-
-  module Filter
-    class Regex
-      attr_reader :label, :input, :regex
-
-      def initialize(label:, input:, regex:)
-        @label = label
-        @input = input
-        @regex = Array(regex)
-      end
-
-      def filter
-        values = regex.flat_map { input.scan(_1) }
-
-        mapping = {}
-
-        values.uniq.each.with_index(1) do |value, index|
-          filter = "#{label}_#{index}"
-          input.gsub! value, "[#{filter}]"
-          mapping[filter.to_sym] = value
-        end
-
-        [input, mapping]
-      end
     end
   end
 end
