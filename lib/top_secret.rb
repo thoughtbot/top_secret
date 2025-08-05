@@ -37,6 +37,7 @@ module TopSecret
       build_mapping(phone_numbers, label: "PHONE_NUMBER")
       build_mapping(ssns, label: "SSN")
       build_mapping(people, label: "PERSON")
+      build_mapping(locations, label: "LOCATION")
       substitute_text
 
       Result.new(input, output, mapping)
@@ -77,6 +78,11 @@ module TopSecret
 
     def people
       tags = entities.filter { _1.fetch(:tag) == "PERSON" && _1.fetch(:score) >= MIN_CONFIDENCE_SCORE }
+      tags.map { _1.fetch(:text) }
+    end
+
+    def locations
+      tags = entities.filter { _1.fetch(:tag) == "LOCATION" && _1.fetch(:score) >= MIN_CONFIDENCE_SCORE }
       tags.map { _1.fetch(:text) }
     end
   end

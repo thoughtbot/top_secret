@@ -26,12 +26,14 @@ RSpec.describe TopSecret::Text do
   describe ".filter" do
     before do
       ralph = build_entity(text: "Ralph", tag: :person)
-      stub_ner_entities(ralph)
+      boston = build_entity(text: "Boston", tag: :location)
+      stub_ner_entities(ralph, boston)
     end
 
     it "filters sensitive information from free text and creates a mapping" do
       input = <<~TEXT
         My name is Ralph
+        My location is Boston
         My email address is user@example.com
         My credit card numbers are 4242-4242-4242-4242 and 4141414141414141
         My social security number is 123-45-6789
@@ -42,6 +44,7 @@ RSpec.describe TopSecret::Text do
 
       expect(result.output).to eq(<<~TEXT)
         My name is [PERSON_1]
+        My location is [LOCATION_1]
         My email address is [EMAIL_1]
         My credit card numbers are [CREDIT_CARD_1] and [CREDIT_CARD_2]
         My social security number is [SSN_1]
@@ -53,7 +56,8 @@ RSpec.describe TopSecret::Text do
         CREDIT_CARD_2: "4141414141414141",
         SSN_1: "123-45-6789",
         PHONE_NUMBER_1: "555-555-5555",
-        PERSON_1: "Ralph"
+        PERSON_1: "Ralph",
+        LOCATION_1: "Boston"
       })
       expect(result.input).to eq(input)
     end
@@ -98,6 +102,12 @@ RSpec.describe TopSecret::Text do
       result = TopSecret::Text.filter("Ralph")
 
       expect(result.output).to eq("[PERSON_1]")
+    end
+
+    it "filters locations from free text" do
+      result = TopSecret::Text.filter("Boston")
+
+      expect(result.output).to eq("[LOCATION_1]")
     end
 
     it "returns a TopSecret::Result" do
@@ -241,6 +251,48 @@ RSpec.describe TopSecret::Text do
         result = TopSecret::Text.filter("Ralph")
 
         expect(result.output).to eq("Ralph")
+      end
+    end
+
+    context "when there are multiple unique locations" do
+      before do
+        boston = build_entity(text: "Boston", tag: :location)
+        new_york = build_entity(text: "New York", tag: :location)
+        stub_ner_entities(boston, new_york)
+      end
+
+      it "filters each location from free text" do
+        result = TopSecret::Text.filter("Boston New York")
+
+        expect(result.output).to eq("[LOCATION_1] [LOCATION_2]")
+      end
+    end
+
+    context "when there are multiple identical locations" do
+      before do
+        boston_1 = build_entity(text: "Boston", tag: :location)
+        boston_2 = build_entity(text: "Boston", tag: :location)
+        stub_ner_entities(boston_1, boston_2)
+      end
+
+      it "filters each location from free text, and maps them to the same filter" do
+        result = TopSecret::Text.filter("Boston Boston")
+
+        expect(result.output).to eq("[LOCATION_1] [LOCATION_1]")
+      end
+    end
+
+    context "when the confidence score is below the threshold for a location" do
+      before do
+        score = TopSecret::MIN_CONFIDENCE_SCORE - 0.1
+        boston = build_entity(text: "Boston", tag: :location, score:)
+        stub_ner_entities(boston)
+      end
+
+      it "does not filter the location from free text" do
+        result = TopSecret::Text.filter("Boston")
+
+        expect(result.output).to eq("Boston")
       end
     end
   end
