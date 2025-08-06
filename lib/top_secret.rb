@@ -10,8 +10,10 @@ module TopSecret
   config_accessor :model_path, default: "ner_model.dat"
   config_accessor :min_confidence_score, default: 0.5
 
-  CREDIT_CARD_REGEX = /\b[3456]\d{15}\b/
-  CREDIT_CARD_REGEX_DELIMITERS = /\b[3456]\d{3}[\s+-]\d{4}[\s+-]\d{4}[\s+-]\d{4}\b/
+  CREDIT_CARD_REGEX = /
+    \b[3456]\d{15}\b |
+    \b[3456]\d{3}(?:[\s+-]\d{4}){3}\b
+  /x
   # Modified from URI::MailTo::EMAIL_REGEXP
   EMAIL_REGEX = %r{[a-zA-Z0-9.!\#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*}
   PHONE_REGEX = /\b(?:\+\d{1,2}\s)?\(?\d{3}\)?[\s+.-]\d{3}[\s+.-]\d{4}\b/
@@ -65,7 +67,7 @@ module TopSecret
     end
 
     def credit_cards
-      input.scan(CREDIT_CARD_REGEX_DELIMITERS) + input.scan(CREDIT_CARD_REGEX)
+      input.scan(CREDIT_CARD_REGEX)
     end
 
     def emails
