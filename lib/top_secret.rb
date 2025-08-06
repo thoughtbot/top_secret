@@ -1,9 +1,14 @@
 # frozen_string_literal: true
 
 require_relative "top_secret/version"
+require "active_support/configurable"
 require "mitie"
 
 module TopSecret
+  include ActiveSupport::Configurable
+
+  config_accessor :model_path, default: "ner_model.dat"
+
   CREDIT_CARD_REGEX = /\b[3456]\d{15}\b/
   CREDIT_CARD_REGEX_DELIMITERS = /\b[3456]\d{3}[\s+-]\d{4}[\s+-]\d{4}[\s+-]\d{4}\b/
   # Modified from URI::MailTo::EMAIL_REGEXP
@@ -16,19 +21,19 @@ module TopSecret
   class Error < StandardError; end
 
   class Text
-    def initialize(input)
+    def initialize(input, model_path: TopSecret.model_path)
       @input = input
       @output = input.dup
       @mapping = {}
 
       # TODO Make this configurable
-      @model = Mitie::NER.new("ner_model.dat")
+      @model = Mitie::NER.new(model_path)
       @doc = @model.doc(@output)
       @entities = @doc.entities
     end
 
-    def self.filter(input)
-      new(input).filter
+    def self.filter(input, model_path: TopSecret.model_path)
+      new(input, model_path:).filter
     end
 
     def filter

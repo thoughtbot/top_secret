@@ -4,6 +4,10 @@ RSpec.describe TopSecret do
   it "has a version number" do
     expect(TopSecret::VERSION).not_to be nil
   end
+
+  it "is configurable" do
+    expect(TopSecret.model_path).to eq("ner_model.dat")
+  end
 end
 
 RSpec.describe "TopSecret::PHONE_REGEX" do
@@ -293,6 +297,40 @@ RSpec.describe TopSecret::Text do
         result = TopSecret::Text.filter("Boston")
 
         expect(result.output).to eq("Boston")
+      end
+    end
+  end
+
+  describe "model_path configuration" do
+    before do
+      doc = instance_double("Mitie::Document", entities: [])
+      ner = instance_double("Mitie::NER", doc:)
+      allow(Mitie::NER).to receive(:new).and_return(ner)
+    end
+
+    it "initializes Mitie::NER with the default model_path" do
+      TopSecret::Text.filter("")
+
+      expect(Mitie::NER).to have_received(:new).with(TopSecret.model_path)
+    end
+
+    context "when the model_path is configured" do
+      it "initializes Mitie::NER with model_path" do
+        TopSecret.configure do |config|
+          config.model_path = "custom_path.dat"
+        end
+
+        TopSecret::Text.filter("")
+
+        expect(Mitie::NER).to have_received(:new).with("custom_path.dat")
+      end
+    end
+
+    context "when the model_path is overridden" do
+      it "initializes Mitie::NER with model_path" do
+        TopSecret::Text.filter("", model_path: "custom_path.dat")
+
+        expect(Mitie::NER).to have_received(:new).with("custom_path.dat")
       end
     end
   end
