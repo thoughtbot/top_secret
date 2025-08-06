@@ -7,6 +7,7 @@ RSpec.describe TopSecret do
 
   it "is configurable" do
     expect(TopSecret.model_path).to eq("ner_model.dat")
+    expect(TopSecret.min_confidence_score).to eq(0.5)
   end
 end
 
@@ -246,7 +247,7 @@ RSpec.describe TopSecret::Text do
 
     context "when the confidence score is below the threshold for a person" do
       before do
-        score = TopSecret::MIN_CONFIDENCE_SCORE - 0.1
+        score = TopSecret.min_confidence_score - 0.1
         ralph = build_entity(text: "Ralph", tag: :person, score:)
         stub_ner_entities(ralph)
       end
@@ -288,7 +289,7 @@ RSpec.describe TopSecret::Text do
 
     context "when the confidence score is below the threshold for a location" do
       before do
-        score = TopSecret::MIN_CONFIDENCE_SCORE - 0.1
+        score = TopSecret.min_confidence_score - 0.1
         boston = build_entity(text: "Boston", tag: :location, score:)
         stub_ner_entities(boston)
       end
@@ -297,6 +298,20 @@ RSpec.describe TopSecret::Text do
         result = TopSecret::Text.filter("Boston")
 
         expect(result.output).to eq("Boston")
+      end
+    end
+
+    context "when the confidence score is passed as an option" do
+      before do
+        ralph = build_entity(text: "Ralph", tag: :person, score: 0.25)
+        boston = build_entity(text: "Boston", tag: :location, score: 0.25)
+        stub_ner_entities(ralph, boston)
+      end
+
+      it "uses that score to filter people and locations" do
+        result = TopSecret::Text.filter("Ralph Boston", min_confidence_score: 0.25)
+
+        expect(result.output).to eq("[PERSON_1] [LOCATION_1]")
       end
     end
   end
@@ -337,7 +352,7 @@ RSpec.describe TopSecret::Text do
 
   private
 
-  def build_entity(text:, tag:, score: TopSecret::MIN_CONFIDENCE_SCORE)
+  def build_entity(text:, tag:, score: TopSecret.min_confidence_score)
     {text:, tag: tag.to_s.upcase, score:}
   end
 
