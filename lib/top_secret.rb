@@ -14,6 +14,16 @@ require_relative "top_secret/error"
 require_relative "top_secret/result"
 require_relative "top_secret/text"
 
+# TopSecret filters sensitive information from free text before it's sent to external services or APIs, such as Chatbots.
+#
+# @!attribute [rw] model_path
+#   @return [String] the path to the MITIE NER model
+#
+# @!attribute [rw] min_confidence_score
+#   @return [Float] the minimum confidence score required for NER matches
+#
+# @!attribute [rw] default_filters
+#   @return [ActiveSupport::OrderedOptions] a set of default filters used to identify sensitive data
 module TopSecret
   include ActiveSupport::Configurable
 
