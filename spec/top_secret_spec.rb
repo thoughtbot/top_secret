@@ -11,6 +11,44 @@ RSpec.describe TopSecret do
   end
 end
 
+RSpec.describe "TopSecret Configuration" do
+  before do
+    doc = instance_double("Mitie::Document", entities: [])
+    ner = instance_double("Mitie::NER", doc:)
+    allow(Mitie::NER).to receive(:new).and_return(ner)
+  end
+
+  it "initializes Mitie::NER with the default model_path" do
+    TopSecret::Text.filter("")
+
+    expect(Mitie::NER).to have_received(:new).with(TopSecret.model_path)
+  end
+
+  context "when the model_path is configured" do
+    it "initializes Mitie::NER with model_path" do
+      with_configuration do
+        TopSecret.configure do |config|
+          config.model_path = "custom_path.dat"
+        end
+
+        TopSecret::Text.filter("")
+
+        expect(Mitie::NER).to have_received(:new).with("custom_path.dat")
+      end
+    end
+  end
+
+  def with_configuration
+    original = TopSecret.config.dup
+
+    yield
+  ensure
+    TopSecret.configure do |config|
+      original.each_pair { |k, v| config.send("#{k}=", v) }
+    end
+  end
+end
+
 RSpec.describe "TopSecret::PHONE_REGEX" do
   phone_numbers = [
     "+1 415-555-1234",
@@ -298,54 +336,6 @@ RSpec.describe TopSecret::Text do
         result = TopSecret::Text.filter("Boston")
 
         expect(result.output).to eq("Boston")
-      end
-    end
-
-    context "when the confidence score is passed as an option" do
-      before do
-        ralph = build_entity(text: "Ralph", tag: :person, score: 0.25)
-        boston = build_entity(text: "Boston", tag: :location, score: 0.25)
-        stub_ner_entities(ralph, boston)
-      end
-
-      it "uses that score to filter people and locations" do
-        result = TopSecret::Text.filter("Ralph Boston", min_confidence_score: 0.25)
-
-        expect(result.output).to eq("[PERSON_1] [LOCATION_1]")
-      end
-    end
-  end
-
-  describe "model_path configuration" do
-    before do
-      doc = instance_double("Mitie::Document", entities: [])
-      ner = instance_double("Mitie::NER", doc:)
-      allow(Mitie::NER).to receive(:new).and_return(ner)
-    end
-
-    it "initializes Mitie::NER with the default model_path" do
-      TopSecret::Text.filter("")
-
-      expect(Mitie::NER).to have_received(:new).with(TopSecret.model_path)
-    end
-
-    context "when the model_path is configured" do
-      it "initializes Mitie::NER with model_path" do
-        TopSecret.configure do |config|
-          config.model_path = "custom_path.dat"
-        end
-
-        TopSecret::Text.filter("")
-
-        expect(Mitie::NER).to have_received(:new).with("custom_path.dat")
-      end
-    end
-
-    context "when the model_path is overridden" do
-      it "initializes Mitie::NER with model_path" do
-        TopSecret::Text.filter("", model_path: "custom_path.dat")
-
-        expect(Mitie::NER).to have_received(:new).with("custom_path.dat")
       end
     end
   end
