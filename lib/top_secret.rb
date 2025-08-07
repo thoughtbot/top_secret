@@ -22,19 +22,18 @@ module TopSecret
   class Error < StandardError; end
 
   class Text
-    def initialize(input, min_confidence_score: TopSecret.min_confidence_score, model_path: TopSecret.model_path)
+    def initialize(input)
       @input = input
       @output = input.dup
       @mapping = {}
 
-      @model = Mitie::NER.new(model_path)
+      @model = Mitie::NER.new(TopSecret.model_path)
       @doc = @model.doc(@output)
       @entities = @doc.entities
-      @min_confidence_score = min_confidence_score
     end
 
-    def self.filter(input, min_confidence_score: TopSecret.min_confidence_score, model_path: TopSecret.model_path)
-      new(input, model_path:, min_confidence_score:).filter
+    def self.filter(input)
+      new(input).filter
     end
 
     def filter
@@ -51,7 +50,7 @@ module TopSecret
 
     private
 
-    attr_reader :input, :output, :mapping, :entities, :min_confidence_score
+    attr_reader :input, :output, :mapping, :entities
 
     def build_mapping(values, label:)
       values.uniq.each.with_index(1) do |value, index|
@@ -83,12 +82,12 @@ module TopSecret
     end
 
     def people
-      tags = entities.filter { _1.fetch(:tag) == "PERSON" && _1.fetch(:score) >= min_confidence_score }
+      tags = entities.filter { _1.fetch(:tag) == "PERSON" && _1.fetch(:score) >= TopSecret.min_confidence_score }
       tags.map { _1.fetch(:text) }
     end
 
     def locations
-      tags = entities.filter { _1.fetch(:tag) == "LOCATION" && _1.fetch(:score) >= min_confidence_score }
+      tags = entities.filter { _1.fetch(:tag) == "LOCATION" && _1.fetch(:score) >= TopSecret.min_confidence_score }
       tags.map { _1.fetch(:text) }
     end
   end
