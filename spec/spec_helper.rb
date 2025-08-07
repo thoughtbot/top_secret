@@ -13,3 +13,14 @@ RSpec.configure do |config|
     c.syntax = :expect
   end
 end
+
+def build_entity(text:, tag:, score: TopSecret.min_confidence_score)
+  {text:, tag: tag.to_s.upcase, score:}
+end
+
+def stub_ner_entities(*entities)
+  doc = instance_double("Mitie::Document", entities:)
+  ner = instance_double("Mitie::NER", doc:)
+
+  stub_const("Mitie::NER", class_double("Mitie::NER", new: ner))
+end
