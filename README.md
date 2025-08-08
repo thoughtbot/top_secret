@@ -1,5 +1,7 @@
 # Top Secret
 
+[![Ruby](https://github.com/thoughtbot/top_secret/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/thoughtbot/top_secret/actions/workflows/main.yml)
+
 Filter sensitive information from free text before sending it to external services or APIs, such as Chatbots.
 
 By default it filters the following:
