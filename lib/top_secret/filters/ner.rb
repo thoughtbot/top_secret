@@ -13,7 +13,7 @@ module TopSecret
       def initialize(label:, tag:, min_confidence_score: nil)
         @label = label
         @tag = tag.upcase.to_s
-        @min_confidence_score = min_confidence_score || TopSecret.min_confidence_score
+        @min_confidence_score = min_confidence_score
       end
 
       # Filters and extracts entity texts matching the tag and score threshold.
@@ -21,7 +21,7 @@ module TopSecret
       # @param entities [Array<Hash>] List of entity hashes with keys :tag, :score, and :text
       # @return [Array<String>] Matched entity texts
       def call(entities)
-        tags = entities.filter { _1.fetch(:tag) == tag && _1.fetch(:score) >= min_confidence_score }
+        tags = entities.filter { _1.fetch(:tag) == tag && _1.fetch(:score) >= (min_confidence_score || TopSecret.min_confidence_score) }
         tags.map { _1.fetch(:text) }
       end
 

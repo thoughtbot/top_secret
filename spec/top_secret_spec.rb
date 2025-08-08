@@ -32,6 +32,24 @@ RSpec.describe "TopSecret Configuration" do
     expect(Mitie::NER).to have_received(:new).with(TopSecret.model_path)
   end
 
+  it "allows TopSecret.min_confidence_score to be overridden" do
+    original = TopSecret.min_confidence_score
+
+    ralph = build_entity(text: "Ralph", tag: :person, score: 0.5)
+    stub_ner_entities(ralph)
+
+    TopSecret.configure do |config|
+      config.min_confidence_score = 100
+    end
+
+    result = TopSecret::Text.filter("Ralph")
+
+    expect(result.output).to eq("Ralph")
+    expect(result.mapping).to eq({})
+  ensure
+    TopSecret.configure { _1.min_confidence_score = original }
+  end
+
   context "when the TopSecret.model_path configuration is overridden" do
     it "initializes Mitie::NER with the custom value" do
       original = TopSecret.model_path
