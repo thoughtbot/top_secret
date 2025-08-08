@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.email = ["stevepolito@hey.com"]
 
   spec.summary = "Filter sensitive information from free text."
-  spec.description = "Filter sensitive information from free text before sending it to external services or APIs, such as Chatbots."
+  spec.description = "Filter sensitive information from free text before sending it to external services or APIs, such as chatbots and LLMs."
   spec.homepage = "https://github.com/thoughtbot/top_secret"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.2.0"
