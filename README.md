@@ -367,7 +367,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-[Bug reports](https://github.com/thoughtbot/top_secret/issues/new/choose) and [pull requests](https://github.com/thoughtbot/top_secret/pulls) are welcome on GitHub at [https://github.com/thoughtbot/top_secret](https://github.com/thoughtbot/top_secret).
+[Bug reports](https://github.com/thoughtbot/top_secret/issues/new/choose](https://github.com/thoughtbot/top_secret/issues/new?template=bug_report.md)) and [pull requests](https://github.com/thoughtbot/top_secret/pulls) are welcome on GitHub at [https://github.com/thoughtbot/top_secret](https://github.com/thoughtbot/top_secret).
 
 Please create a [new discussion](https://github.com/thoughtbot/top_secret/discussions/new?category=ideas) if you want to share ideas for new features.
 
