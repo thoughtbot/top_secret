@@ -11,6 +11,7 @@ require_relative "top_secret/constants"
 require_relative "top_secret/filters/ner"
 require_relative "top_secret/filters/regex"
 require_relative "top_secret/error"
+require_relative "top_secret/batch_result"
 require_relative "top_secret/result"
 require_relative "top_secret/text"
 

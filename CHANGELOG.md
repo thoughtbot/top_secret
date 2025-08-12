@@ -1,5 +1,10 @@
 ## [Unreleased]
 
+### Added
+
+-   Added `TopSecret::Text.filter_all` for batch processing multiple messages with globally consistent redaction labels
+-   Added `TopSecret::BatchResult` class to hold results from batch operations
+
 ### Changed
 
 -   **BREAKING:** Refactored configuration system to use individual filter accessors instead of nested `default_filters`

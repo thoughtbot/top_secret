@@ -32,6 +32,46 @@ module TopSecret
       new(input, filters:, custom_filters:).filter
     end
 
+    # Filters multiple messages with globally consistent redaction labels
+    #
+    # Processes a collection of messages and ensures that identical sensitive values
+    # receive the same redaction labels across all messages. This is useful when
+    # processing conversation threads or document collections where consistency matters.
+    #
+    # @param messages [Array<String>] Array of text messages to filter
+    # @param custom_filters [Array] Additional custom filters to apply
+    # @param filters [Hash] Optional filters to override defaults (only valid filter keys accepted)
+    # @return [BatchResult] Contains global mapping and array of input/output pairs
+    # @raise [ArgumentError] If invalid filter keys are provided
+    #
+    # @example Basic usage
+    #   messages = ["Contact john@test.com", "Email john@test.com again"]
+    #   result = TopSecret::Text.filter_all(messages)
+    #   result.items[0].output # => "Contact [EMAIL_1]"
+    #   result.items[1].output # => "Email [EMAIL_1] again"
+    #   result.mapping # => { EMAIL_1: "john@test.com" }
+    #
+    # @example With custom filters
+    #   ip_filter = TopSecret::Filters::Regex.new(label: "IP", regex: /\d+\.\d+\.\d+\.\d+/)
+    #   result = TopSecret::Text.filter_all(messages, custom_filters: [ip_filter])
+    def self.filter_all(messages, custom_filters: [], **filters)
+      global_mapping = {}
+
+      items = messages.map do |message|
+        result = filter(message, custom_filters:, **filters)
+        mapping = result.mapping
+        input = result.input
+        output = input.dup
+
+        mapping.each { |key, value| global_mapping[value] ||= key }
+        global_mapping.invert.each { |filter, value| output.gsub! value, "[#{filter}]" }
+
+        BatchResult::Item.new(input, output)
+      end
+
+      BatchResult.new(mapping: global_mapping.invert, items:)
+    end
+
     # Applies configured filters to the input, redacting matches and building a mapping.
     #
     # @return [Result] Contains original input, redacted output, and mapping of labels to values

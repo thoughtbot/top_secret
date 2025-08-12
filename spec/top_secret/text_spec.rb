@@ -472,4 +472,170 @@ RSpec.describe TopSecret::Text do
       end
     end
   end
+
+  describe ".filter_all" do
+    before do
+      stub_ner_entities
+    end
+
+    it "filters sensitive information from a list of free text and creates a mapping" do
+      messages = [
+        "My email is ralph@example.com, and my credit card number is 4242424242424242",
+        "I'll email ruby@example.com, and send her my new credit card number, which is 4141414141414141",
+        "Please charge 4242424242424242 and email ruby@example.com and ralph@example.com"
+      ]
+
+      result = TopSecret::Text.filter_all(messages)
+
+      aggregate_failures "test filters" do
+        expect(result.mapping).to eq({
+          EMAIL_1: "ralph@example.com",
+          EMAIL_2: "ruby@example.com",
+          CREDIT_CARD_1: "4242424242424242",
+          CREDIT_CARD_2: "4141414141414141"
+        })
+        expect(result.items.map(&:input)).to eq(messages)
+        expect(result.items.map(&:output)).to eq([
+          "My email is [EMAIL_1], and my credit card number is [CREDIT_CARD_1]",
+          "I'll email [EMAIL_2], and send her my new credit card number, which is [CREDIT_CARD_2]",
+          "Please charge [CREDIT_CARD_1] and email [EMAIL_2] and [EMAIL_1]"
+        ])
+      end
+    end
+
+    it "returns TopSecret::BatchResult" do
+      result = TopSecret::Text.filter_all(["", ""])
+
+      expect(result).to be_an_instance_of(TopSecret::BatchResult)
+    end
+
+    context "when the filters option is passed" do
+      it "overrides existing Regex filters" do
+        messages = [
+          "ralph[at]example.com 4141414141414141 ruby[at]example.com 4242424242424242",
+          "4242424242424242 ruby[at]example.com 4141414141414141 ralph[at]example.com"
+        ]
+        email_filter = TopSecret::Filters::Regex.new(label: "EMAIL_ADDRESS", regex: /\b\w+\[at\]\w+\.\w+\b/)
+
+        result = TopSecret::Text.filter_all(messages, email_filter:)
+
+        expect(result.mapping).to eq({
+          EMAIL_ADDRESS_1: "ralph[at]example.com",
+          EMAIL_ADDRESS_2: "ruby[at]example.com",
+          CREDIT_CARD_1: "4141414141414141",
+          CREDIT_CARD_2: "4242424242424242"
+        })
+        expect(result.items.map(&:input)).to eq(messages)
+        expect(result.items.map(&:output)).to eq([
+          "[EMAIL_ADDRESS_1] [CREDIT_CARD_1] [EMAIL_ADDRESS_2] [CREDIT_CARD_2]",
+          "[CREDIT_CARD_2] [EMAIL_ADDRESS_2] [CREDIT_CARD_1] [EMAIL_ADDRESS_1]"
+        ])
+      end
+
+      it "overrides existing NER filters" do
+        score = 0.25
+        ralph = build_entity(text: "Ralph", tag: :person, score:)
+        ruby = build_entity(text: "Ruby", tag: :person, score:)
+        stub_ner_entities(ralph, ruby)
+
+        messages = [
+          "Ralph 4141414141414141 Ruby 4242424242424242",
+          "4242424242424242 Ruby 4141414141414141 Ralph"
+        ]
+        people_filter = TopSecret::Filters::NER.new(
+          label: "NAME",
+          tag: :person,
+          min_confidence_score: score
+        )
+
+        result = TopSecret::Text.filter_all(messages, people_filter:)
+
+        expect(result.mapping).to eq({
+          NAME_1: "Ralph",
+          NAME_2: "Ruby",
+          CREDIT_CARD_1: "4141414141414141",
+          CREDIT_CARD_2: "4242424242424242"
+        })
+        expect(result.items.map(&:input)).to eq(messages)
+        expect(result.items.map(&:output)).to eq([
+          "[NAME_1] [CREDIT_CARD_1] [NAME_2] [CREDIT_CARD_2]",
+          "[CREDIT_CARD_2] [NAME_2] [CREDIT_CARD_1] [NAME_1]"
+        ])
+      end
+
+      it "ignores existing filters" do
+        messages = [
+          "ralph@example.com 4141414141414141 ruby@example.com 4242424242424242",
+          "4242424242424242 ruby@example.com 4141414141414141 ralph@example.com"
+        ]
+
+        result = TopSecret::Text.filter_all(messages, email_filter: nil)
+
+        expect(result.mapping).to eq({
+          CREDIT_CARD_1: "4141414141414141",
+          CREDIT_CARD_2: "4242424242424242"
+        })
+        expect(result.items.map(&:input)).to eq(messages)
+        expect(result.items.map(&:output)).to eq([
+          "ralph@example.com [CREDIT_CARD_1] ruby@example.com [CREDIT_CARD_2]",
+          "[CREDIT_CARD_2] ruby@example.com [CREDIT_CARD_1] ralph@example.com"
+        ])
+      end
+
+      it "respects new Regex filters" do
+        messages = [
+          "192.168.1.1 4141414141414141 127.0.0.1 4242424242424242",
+          "4242424242424242 127.0.0.1 4141414141414141 192.168.1.1"
+        ]
+        ip_address_filter = TopSecret::Filters::Regex.new(
+          label: "IP_ADDRESS",
+          regex: /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/
+        )
+
+        result = TopSecret::Text.filter_all(messages, custom_filters: [ip_address_filter])
+
+        expect(result.mapping).to eq({
+          IP_ADDRESS_1: "192.168.1.1",
+          IP_ADDRESS_2: "127.0.0.1",
+          CREDIT_CARD_1: "4141414141414141",
+          CREDIT_CARD_2: "4242424242424242"
+        })
+        expect(result.items.map(&:input)).to eq(messages)
+        expect(result.items.map(&:output)).to eq([
+          "[IP_ADDRESS_1] [CREDIT_CARD_1] [IP_ADDRESS_2] [CREDIT_CARD_2]",
+          "[CREDIT_CARD_2] [IP_ADDRESS_2] [CREDIT_CARD_1] [IP_ADDRESS_1]"
+        ])
+      end
+
+      it "respects new NER filters" do
+        ip_addresses = [
+          build_entity(text: "192.168.1.1", tag: :ip_address),
+          build_entity(text: "127.0.0.1", tag: :ip_address)
+        ]
+        stub_ner_entities(*ip_addresses)
+        messages = [
+          "192.168.1.1 4141414141414141 127.0.0.1 4242424242424242",
+          "4242424242424242 127.0.0.1 4141414141414141 192.168.1.1"
+        ]
+        ip_address_filter = TopSecret::Filters::NER.new(
+          label: "IP_ADDRESS",
+          tag: :ip_address
+        )
+
+        result = TopSecret::Text.filter_all(messages, custom_filters: [ip_address_filter])
+
+        expect(result.mapping).to eq({
+          IP_ADDRESS_1: "192.168.1.1",
+          IP_ADDRESS_2: "127.0.0.1",
+          CREDIT_CARD_1: "4141414141414141",
+          CREDIT_CARD_2: "4242424242424242"
+        })
+        expect(result.items.map(&:input)).to eq(messages)
+        expect(result.items.map(&:output)).to eq([
+          "[IP_ADDRESS_1] [CREDIT_CARD_1] [IP_ADDRESS_2] [CREDIT_CARD_2]",
+          "[CREDIT_CARD_2] [IP_ADDRESS_2] [CREDIT_CARD_1] [IP_ADDRESS_1]"
+        ])
+      end
+    end
+  end
 end

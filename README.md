@@ -156,6 +156,53 @@ result.mapping
 # => {:EMAIL_1=>"ralph@thoughtbot.com", :PERSON_1=>"Ralph"}
 ```
 
+### Batch Processing
+
+When processing multiple messages, use `filter_all` to ensure consistent redaction labels across all messages:
+
+```ruby
+messages = [
+  "Contact ralph@thoughtbot.com for details",
+  "Email ralph@thoughtbot.com again if needed",
+  "Also CC ruby@thoughtbot.com on the thread"
+]
+
+result = TopSecret::Text.filter_all(messages)
+```
+
+This will return
+
+```ruby
+<TopSecret::BatchResult
+  @mapping={:EMAIL_1=>"ralph@thoughtbot.com", :EMAIL_2=>"ruby@thoughtbot.com"},
+  @items=[
+    <TopSecret::BatchResult::Item @input="Contact ralph@thoughtbot.com for details", @output="Contact [EMAIL_1] for details">,
+    <TopSecret::BatchResult::Item @input="Email ralph@thoughtbot.com again if needed", @output="Email [EMAIL_1] again if needed">,
+    <TopSecret::BatchResult::Item @input="Also CC ruby@thoughtbot.com on the thread", @output="Also CC [EMAIL_2] on the thread">
+  ]
+>
+```
+
+Access the global mapping
+
+```ruby
+result.mapping
+
+# => {:EMAIL_1=>"ralph@thoughtbot.com", :EMAIL_2=>"ruby@thoughtbot.com"}
+```
+
+Access individual items
+
+```ruby
+result.items[0].input
+# => "Contact ralph@thoughtbot.com for details"
+
+result.items[0].output
+# => "Contact [EMAIL_1] for details"
+```
+
+The key benefit is that identical values receive the same labels across all messages - notice how `ralph@thoughtbot.com` becomes `[EMAIL_1]` in both the first and second messages.
+
 ### Advanced Examples
 
 #### Overriding the default filters
