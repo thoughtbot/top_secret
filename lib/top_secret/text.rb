@@ -16,7 +16,7 @@ module TopSecret
       @entities = @doc.entities
 
       @filters = filters
-      @custom_filters = custom_filters || []
+      @custom_filters = custom_filters
     end
 
     # Convenience method to create an instance and filter input
@@ -26,7 +26,7 @@ module TopSecret
     # @param custom_filters [Array] Additional custom filters to apply
     # @return [Result] The filtered result
     def self.filter(input, custom_filters: [], **filters)
-      new(input, filters: filters, custom_filters: custom_filters).filter
+      new(input, filters:, custom_filters:).filter
     end
 
     # Applies configured filters to the input, redacting matches and building a mapping.
