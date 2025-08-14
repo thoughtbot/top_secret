@@ -22,23 +22,40 @@ require_relative "top_secret/text"
 # @!attribute [rw] min_confidence_score
 #   @return [Float] the minimum confidence score required for NER matches
 #
-# @!attribute [rw] default_filters
-#   @return [ActiveSupport::OrderedOptions] a set of default filters used to identify sensitive data
+# @!attribute [rw] custom_filters
+#   @return [ActiveSupport::OrderedOptions] a set of custom filters that can be configured
+#
+# @!attribute [rw] credit_card_filter
+#   @return [TopSecret::Filters::Regex] filter for credit card numbers
+#
+# @!attribute [rw] email_filter
+#   @return [TopSecret::Filters::Regex] filter for email addresses
+#
+# @!attribute [rw] phone_number_filter
+#   @return [TopSecret::Filters::Regex] filter for phone numbers
+#
+# @!attribute [rw] ssn_filter
+#   @return [TopSecret::Filters::Regex] filter for social security numbers
+#
+# @!attribute [rw] people_filter
+#   @return [TopSecret::Filters::NER] filter for person names
+#
+# @!attribute [rw] location_filter
+#   @return [TopSecret::Filters::NER] filter for location names
 module TopSecret
   include ActiveSupport::Configurable
 
   config_accessor :model_path, default: "ner_model.dat"
   config_accessor :min_confidence_score, default: MIN_CONFIDENCE_SCORE
 
-  config_accessor :default_filters do
-    options = ActiveSupport::OrderedOptions.new
-    options.credit_card_filter = TopSecret::Filters::Regex.new(label: "CREDIT_CARD", regex: CREDIT_CARD_REGEX)
-    options.email_filter = TopSecret::Filters::Regex.new(label: "EMAIL", regex: EMAIL_REGEX)
-    options.phone_number_filter = TopSecret::Filters::Regex.new(label: "PHONE_NUMBER", regex: PHONE_REGEX)
-    options.ssn_filter = TopSecret::Filters::Regex.new(label: "SSN", regex: SSN_REGEX)
-    options.people_filter = TopSecret::Filters::NER.new(label: "PERSON", tag: :person)
-    options.location_filter = TopSecret::Filters::NER.new(label: "LOCATION", tag: :location)
-
-    options
+  config_accessor :custom_filters do
+    ActiveSupport::OrderedOptions.new
   end
+
+  config_accessor :credit_card_filter, default: TopSecret::Filters::Regex.new(label: "CREDIT_CARD", regex: CREDIT_CARD_REGEX)
+  config_accessor :email_filter, default: TopSecret::Filters::Regex.new(label: "EMAIL", regex: EMAIL_REGEX)
+  config_accessor :phone_number_filter, default: TopSecret::Filters::Regex.new(label: "PHONE_NUMBER", regex: PHONE_REGEX)
+  config_accessor :ssn_filter, default: TopSecret::Filters::Regex.new(label: "SSN", regex: SSN_REGEX)
+  config_accessor :people_filter, default: TopSecret::Filters::NER.new(label: "PERSON", tag: :person)
+  config_accessor :location_filter, default: TopSecret::Filters::NER.new(label: "LOCATION", tag: :location)
 end

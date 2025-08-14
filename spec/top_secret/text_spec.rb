@@ -52,12 +52,10 @@ RSpec.describe TopSecret::Text do
           My phone number is 555-555-5555
         TEXT
 
-        result = TopSecret::Text.filter(input, filters: {
-          email_filter: TopSecret::Filters::Regex.new(
-            label: "EMAIL_ADDRESS",
-            regex: /user\[at\]example\.com/
-          )
-        })
+        result = TopSecret::Text.filter(input, email_filter: TopSecret::Filters::Regex.new(
+          label: "EMAIL_ADDRESS",
+          regex: /user\[at\]example\.com/
+        ))
 
         expect(result.output).to eq(<<~TEXT)
           My name is [PERSON_1]
@@ -93,13 +91,11 @@ RSpec.describe TopSecret::Text do
           My phone number is 555-555-5555
         TEXT
 
-        result = TopSecret::Text.filter(input, filters: {
-          people_filter: TopSecret::Filters::NER.new(
-            label: "NAME",
-            tag: :person,
-            min_confidence_score: score
-          )
-        })
+        result = TopSecret::Text.filter(input, people_filter: TopSecret::Filters::NER.new(
+          label: "NAME",
+          tag: :person,
+          min_confidence_score: score
+        ))
 
         expect(result.output).to eq(<<~TEXT)
           My name is [NAME_1]
@@ -131,9 +127,7 @@ RSpec.describe TopSecret::Text do
           My phone number is 555-555-5555
         TEXT
 
-        result = TopSecret::Text.filter(input, filters: {
-          email_filter: nil
-        })
+        result = TopSecret::Text.filter(input, email_filter: nil)
 
         expect(result.output).to eq(<<~TEXT)
           My name is [PERSON_1]
@@ -165,12 +159,10 @@ RSpec.describe TopSecret::Text do
           My IP address is 192.168.1.1
         TEXT
 
-        result = TopSecret::Text.filter(input, filters: {
-          ip_address_filter: TopSecret::Filters::Regex.new(
-            label: "IP_ADDRESS",
-            regex: /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/
-          )
-        })
+        result = TopSecret::Text.filter(input, custom_filters: [TopSecret::Filters::Regex.new(
+          label: "IP_ADDRESS",
+          regex: /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/
+        )])
 
         expect(result.output).to eq(<<~TEXT)
           My name is [PERSON_1]
@@ -208,12 +200,10 @@ RSpec.describe TopSecret::Text do
           My IP address is 192.168.1.1
         TEXT
 
-        result = TopSecret::Text.filter(input, filters: {
-          ip_address_filter: TopSecret::Filters::NER.new(
-            label: "IP_ADDRESS",
-            tag: :ip_address
-          )
-        })
+        result = TopSecret::Text.filter(input, custom_filters: [TopSecret::Filters::NER.new(
+          label: "IP_ADDRESS",
+          tag: :ip_address
+        )])
 
         expect(result.output).to eq(<<~TEXT)
           My name is [PERSON_1]
