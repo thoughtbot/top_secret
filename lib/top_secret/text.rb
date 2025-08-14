@@ -98,7 +98,6 @@ module TopSecret
     #
     # @return [Array] Array of filter objects to apply
     def all_filters
-      # Get current default filters
       default_filters = {
         credit_card_filter: TopSecret.credit_card_filter,
         email_filter: TopSecret.email_filter,
@@ -108,10 +107,8 @@ module TopSecret
         location_filter: TopSecret.location_filter
       }
 
-      # Apply any overrides from the filters parameter
       merged_filters = default_filters.merge(filters)
 
-      # Combine default/override filters with custom filters (both global and per-call)
       merged_filters.values.compact + TopSecret.custom_filters + custom_filters
     end
   end
