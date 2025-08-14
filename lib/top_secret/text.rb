@@ -111,8 +111,8 @@ module TopSecret
       # Apply any overrides from the filters parameter
       merged_filters = default_filters.merge(filters)
 
-      # Combine default/override filters with custom filters
-      merged_filters.values.compact + custom_filters
+      # Combine default/override filters with custom filters (both global and per-call)
+      merged_filters.values.compact + TopSecret.custom_filters + custom_filters
     end
   end
 end

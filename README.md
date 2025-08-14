@@ -343,14 +343,16 @@ TopSecret.configure do |config|
 end
 ```
 
-### Adding new default filters
+### Adding custom filters globally
 
 ```ruby
+ip_address_filter = TopSecret::Filters::Regex.new(
+  label: "IP_ADDRESS",
+  regex: /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/
+)
+
 TopSecret.configure do |config|
-  config.custom_filters.ip_address_filter = TopSecret::Filters::Regex.new(
-    label: "IP_ADDRESS",
-    regex: /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/
-  )
+  config.custom_filters << ip_address_filter
 end
 ```
 

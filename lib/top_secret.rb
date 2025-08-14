@@ -23,7 +23,7 @@ require_relative "top_secret/text"
 #   @return [Float] the minimum confidence score required for NER matches
 #
 # @!attribute [rw] custom_filters
-#   @return [ActiveSupport::OrderedOptions] a set of custom filters that can be configured
+#   @return [Array] array of custom filters that can be configured
 #
 # @!attribute [rw] credit_card_filter
 #   @return [TopSecret::Filters::Regex] filter for credit card numbers
@@ -48,9 +48,7 @@ module TopSecret
   config_accessor :model_path, default: "ner_model.dat"
   config_accessor :min_confidence_score, default: MIN_CONFIDENCE_SCORE
 
-  config_accessor :custom_filters do
-    ActiveSupport::OrderedOptions.new
-  end
+  config_accessor :custom_filters, default: []
 
   config_accessor :credit_card_filter, default: TopSecret::Filters::Regex.new(label: "CREDIT_CARD", regex: CREDIT_CARD_REGEX)
   config_accessor :email_filter, default: TopSecret::Filters::Regex.new(label: "EMAIL", regex: EMAIL_REGEX)
