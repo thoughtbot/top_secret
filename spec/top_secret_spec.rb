@@ -8,14 +8,12 @@ RSpec.describe TopSecret do
   it "has default configuration values" do
     expect(TopSecret.model_path).to eq("ner_model.dat")
     expect(TopSecret.min_confidence_score).to eq(0.5)
-    expect(TopSecret.default_filters).to match(
-      credit_card_filter: an_instance_of(TopSecret::Filters::Regex),
-      email_filter: an_instance_of(TopSecret::Filters::Regex),
-      phone_number_filter: an_instance_of(TopSecret::Filters::Regex),
-      ssn_filter: an_instance_of(TopSecret::Filters::Regex),
-      people_filter: an_instance_of(TopSecret::Filters::NER),
-      location_filter: an_instance_of(TopSecret::Filters::NER)
-    )
+    expect(TopSecret.credit_card_filter).to be_an_instance_of(TopSecret::Filters::Regex)
+    expect(TopSecret.email_filter).to be_an_instance_of(TopSecret::Filters::Regex)
+    expect(TopSecret.phone_number_filter).to be_an_instance_of(TopSecret::Filters::Regex)
+    expect(TopSecret.ssn_filter).to be_an_instance_of(TopSecret::Filters::Regex)
+    expect(TopSecret.people_filter).to be_an_instance_of(TopSecret::Filters::NER)
+    expect(TopSecret.location_filter).to be_an_instance_of(TopSecret::Filters::NER)
   end
 end
 
@@ -65,11 +63,11 @@ RSpec.describe "TopSecret Configuration" do
     end
   end
 
-  it "allows TopSecret.default_filters to be overridden" do
-    original = TopSecret.default_filters.email_filter
+  it "allows email filter to be overridden" do
+    original = TopSecret.email_filter
 
     TopSecret.configure do |config|
-      config.default_filters.email_filter = TopSecret::Filters::Regex.new(
+      config.email_filter = TopSecret::Filters::Regex.new(
         label: "email",
         regex: /user\[at\]example\.com/
       )
@@ -82,14 +80,14 @@ RSpec.describe "TopSecret Configuration" do
       email_1: "user[at]example.com"
     })
   ensure
-    TopSecret.configure { _1.default_filters.email_filter = original }
+    TopSecret.configure { _1.email_filter = original }
   end
 
-  it "allows TopSecret.default_filters to be ignored" do
-    original = TopSecret.default_filters.email_filter
+  it "allows email filter to be disabled" do
+    original = TopSecret.email_filter
 
     TopSecret.configure do |config|
-      config.default_filters.email_filter = nil
+      config.email_filter = nil
     end
 
     result = TopSecret::Text.filter("user@example.com")
@@ -97,45 +95,37 @@ RSpec.describe "TopSecret Configuration" do
     expect(result.output).to eq("user@example.com")
     expect(result.mapping).to eq({})
   ensure
-    TopSecret.configure { _1.default_filters.email_filter = original }
+    TopSecret.configure { _1.email_filter = original }
   end
 
-  it "respects new Regex filters" do
-    TopSecret.configure do |config|
-      config.default_filters.passport = TopSecret::Filters::Regex.new(
-        label: "PASSPORT",
-        regex: /\b[A-Z0-9]{6,9}\b/i
-      )
-    end
+  it "respects custom Regex filters" do
+    passport_filter = TopSecret::Filters::Regex.new(
+      label: "PASSPORT",
+      regex: /\b[A-Z0-9]{6,9}\b/i
+    )
 
-    result = TopSecret::Text.filter("A123456")
+    result = TopSecret::Text.filter("A123456", custom_filters: [passport_filter])
 
     expect(result.output).to eq("[PASSPORT_1]")
     expect(result.mapping).to eq({
       PASSPORT_1: "A123456"
     })
-  ensure
-    TopSecret.configure { _1.default_filters.delete(:passport) }
   end
 
-  it "respects new NER filters" do
+  it "respects custom NER filters" do
     ip_address = build_entity(text: "192.168.1.1", tag: :ip_address)
     stub_ner_entities(ip_address)
 
-    TopSecret.configure do |config|
-      config.default_filters.passport = TopSecret::Filters::NER.new(
-        label: "IP_ADDRESS",
-        tag: :ip_address
-      )
-    end
+    ip_filter = TopSecret::Filters::NER.new(
+      label: "IP_ADDRESS",
+      tag: :ip_address
+    )
 
-    result = TopSecret::Text.filter("192.168.1.1")
+    result = TopSecret::Text.filter("192.168.1.1", custom_filters: [ip_filter])
 
     expect(result.output).to eq("[IP_ADDRESS_1]")
     expect(result.mapping).to eq({
       IP_ADDRESS_1: "192.168.1.1"
     })
-  ensure
-    TopSecret.configure { _1.default_filters.delete(:passport) }
   end
 end

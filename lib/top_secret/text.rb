@@ -1,11 +1,14 @@
 # frozen_string_literal: true
 
+require "active_support/core_ext/hash/keys"
+
 module TopSecret
   # Processes text to identify and redact sensitive information using configured filters.
   class Text
     # @param input [String] The original text to be filtered
     # @param filters [Hash, nil] Optional set of filters to override the defaults
-    def initialize(input, filters: TopSecret.default_filters)
+    # @param custom_filters [Array] Additional custom filters to apply
+    def initialize(input, custom_filters: [], filters: {})
       @input = input
       @output = input.dup
       @mapping = {}
@@ -15,23 +18,31 @@ module TopSecret
       @entities = @doc.entities
 
       @filters = filters
+      @custom_filters = custom_filters
     end
 
     # Convenience method to create an instance and filter input
     #
     # @param input [String] The text to filter
-    # @param filters [Hash] Optional filters to override defaults
+    # @param filters [Hash] Optional filters to override defaults (only valid filter keys accepted)
+    # @param custom_filters [Array] Additional custom filters to apply
     # @return [Result] The filtered result
-    def self.filter(input, filters: {})
-      new(input, filters:).filter
+    # @raise [ArgumentError] If invalid filter keys are provided
+    def self.filter(input, custom_filters: [], **filters)
+      new(input, filters:, custom_filters:).filter
     end
 
     # Applies configured filters to the input, redacting matches and building a mapping.
     #
     # @return [Result] Contains original input, redacted output, and mapping of labels to values
     # @raise [Error] If an unsupported filter is encountered
+    # @raise [ArgumentError] If invalid filter keys are provided
     def filter
-      TopSecret.default_filters.merge(filters).compact.each_value do |filter|
+      validate_filters!
+
+      all_filters.each do |filter|
+        next if filter.nil?
+
         values = case filter
         when TopSecret::Filters::Regex
           filter.call(input)
@@ -65,6 +76,9 @@ module TopSecret
     # @return [Hash] Active filters used for redaction
     attr_reader :filters
 
+    # @return [Array] Custom filters to apply
+    attr_reader :custom_filters
+
     # Builds the mapping of label keys to matched values, indexed uniquely.
     #
     # @param values [Array<String>] Values matched by a filter
@@ -84,6 +98,44 @@ module TopSecret
       mapping.each do |filter, value|
         output.gsub! value, "[#{filter}]"
       end
+    end
+
+    # Collects all filters to apply: default filters with overrides plus custom filters
+    #
+    # @return [Array] Array of filter objects to apply
+    def all_filters
+      merged_filters.values.compact + TopSecret.custom_filters + custom_filters
+    end
+
+    # Merges default filters with user-provided filter overrides
+    #
+    # @return [Hash] Hash containing default filters with any user overrides applied
+    # @private
+    def merged_filters
+      default_filters.merge(filters)
+    end
+
+    # Validates that all provided filter keys are recognized
+    #
+    # @return [void]
+    # @raise [ArgumentError] If invalid filter keys are provided
+    def validate_filters!
+      merged_filters.assert_valid_keys(*default_filters.keys)
+    end
+
+    # Returns the default filters configuration hash
+    #
+    # @return [Hash] Hash containing all configured default filters, keyed by filter name
+    # @private
+    def default_filters
+      {
+        credit_card_filter: TopSecret.credit_card_filter,
+        email_filter: TopSecret.email_filter,
+        phone_number_filter: TopSecret.phone_number_filter,
+        ssn_filter: TopSecret.ssn_filter,
+        people_filter: TopSecret.people_filter,
+        location_filter: TopSecret.location_filter
+      }
     end
   end
 end

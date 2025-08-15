@@ -162,14 +162,18 @@ result.mapping
 
 When overriding or [disabling](#disabling-a-default-filter-1) a [default filter](#default-filters), you must map to the correct key.
 
+> [!IMPORTANT]
+> Invalid filter keys will raise an `ArgumentError`. Only the following keys are valid:
+> `credit_card_filter`, `email_filter`, `phone_number_filter`, `ssn_filter`, `people_filter`, `location_filter`
+
 ```ruby
 regex_filter = TopSecret::Filters::Regex.new(label: "EMAIL_ADDRESS", regex: /\b\w+\[at\]\w+\.\w+\b/)
 ner_filter = TopSecret::Filters::NER.new(label: "NAME", tag: :person, min_confidence_score: 0.25)
 
-TopSecret::Text.filter("Ralph can be reached at ralph[at]thoughtbot.com", filters: {
+TopSecret::Text.filter("Ralph can be reached at ralph[at]thoughtbot.com",
   email_filter: regex_filter,
   people_filter: ner_filter
-})
+)
 ```
 
 This will return
@@ -185,10 +189,10 @@ This will return
 #### Disabling a default filter
 
 ```ruby
-TopSecret::Text.filter("Ralph can be reached at ralph@thoughtbot.com", filters: {
+TopSecret::Text.filter("Ralph can be reached at ralph@thoughtbot.com",
   email_filter: nil,
   people_filter: nil
-})
+)
 ```
 
 This will return
@@ -201,6 +205,13 @@ This will return
 >
 ```
 
+#### Error handling for invalid filter keys
+
+```ruby
+# This will raise ArgumentError: Unknown key: :invalid_filter. Valid keys are: ...
+TopSecret::Text.filter("some text", invalid_filter: some_filter)
+```
+
 ### Custom Filters
 
 #### Adding new [Regex filters][]
@@ -211,9 +222,9 @@ ip_address_filter = TopSecret::Filters::Regex.new(
   regex: /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/
 )
 
-TopSecret::Text.filter("Ralph's IP address is 192.168.1.1", filters: {
-  ip_address_filter: ip_address_filter
-})
+TopSecret::Text.filter("Ralph's IP address is 192.168.1.1",
+  custom_filters: [ip_address_filter]
+)
 ```
 
 This will return
@@ -237,9 +248,9 @@ language_filter = TopSecret::Filters::NER.new(
   min_confidence_score: 0.75
 )
 
-TopSecret::Text.filter("Ralph's favorite programming language is Ruby.", filters: {
-  language_filter: language_filter
-})
+TopSecret::Text.filter("Ralph's favorite programming language is Ruby.",
+  custom_filters: [language_filter]
+)
 ```
 
 This will return
@@ -267,9 +278,9 @@ regex_filter = TopSecret::Filters::Regex.new(
   regex: /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/
 )
 
-result = TopSecret::Text.filter("Server IP: 192.168.1.1", filters: {
-  ip_address_filter: regex_filter
-})
+result = TopSecret::Text.filter("Server IP: 192.168.1.1",
+  custom_filters: [regex_filter]
+)
 
 result.output
 # => "Server IP: [IP_ADDRESS_1]"
@@ -287,9 +298,9 @@ ner_filter = TopSecret::Filters::NER.new(
   min_confidence_score: 0.25
 )
 
-result = TopSecret::Text.filter("Ralph and Ruby work at thoughtbot.", filters: {
+result = TopSecret::Text.filter("Ralph and Ruby work at thoughtbot.",
   people_filter: ner_filter
-})
+)
 
 result.output
 # => "[PERSON_1] and [PERSON_2] work at thoughtbot."
@@ -328,7 +339,7 @@ end
 
 ```ruby
 TopSecret.configure do |config|
-  config.default_filters.email_filter = TopSecret::Filters::Regex.new(
+  config.email_filter = TopSecret::Filters::Regex.new(
     label: "EMAIL_ADDRESS",
     regex: /\b\w+\[at\]\w+\.\w+\b/
   )
@@ -339,18 +350,20 @@ end
 
 ```ruby
 TopSecret.configure do |config|
-  config.default_filters.email_filter = nil
+  config.email_filter = nil
 end
 ```
 
-### Adding new default filters
+### Adding custom filters globally
 
 ```ruby
+ip_address_filter = TopSecret::Filters::Regex.new(
+  label: "IP_ADDRESS",
+  regex: /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/
+)
+
 TopSecret.configure do |config|
-  config.default_filters.ip_address_filter = TopSecret::Filters::Regex.new(
-    label: "IP_ADDRESS",
-    regex: /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/
-  )
+  config.custom_filters << ip_address_filter
 end
 ```
 
