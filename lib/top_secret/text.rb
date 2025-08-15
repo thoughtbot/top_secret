@@ -56,15 +56,12 @@ module TopSecret
     #   ip_filter = TopSecret::Filters::Regex.new(label: "IP", regex: /\d+\.\d+\.\d+\.\d+/)
     #   result = TopSecret::Text.filter_all(messages, custom_filters: [ip_filter])
     def self.filter_all(messages, custom_filters: [], **filters)
-      # Create shared model once for performance
       shared_model = Mitie::NER.new(TopSecret.model_path)
 
-      # First pass: collect all individual results using shared model
       individual_results = messages.map do |message|
         new(message, filters:, custom_filters:, model: shared_model).filter
       end
 
-      # Build global mapping tracking order of first occurrence across all messages
       global_mapping = {}
       label_counters = {}
 
