@@ -162,6 +162,10 @@ result.mapping
 
 When overriding or [disabling](#disabling-a-default-filter-1) a [default filter](#default-filters), you must map to the correct key.
 
+> [!IMPORTANT]
+> Invalid filter keys will raise an `ArgumentError`. Only the following keys are valid:
+> `credit_card_filter`, `email_filter`, `phone_number_filter`, `ssn_filter`, `people_filter`, `location_filter`
+
 ```ruby
 regex_filter = TopSecret::Filters::Regex.new(label: "EMAIL_ADDRESS", regex: /\b\w+\[at\]\w+\.\w+\b/)
 ner_filter = TopSecret::Filters::NER.new(label: "NAME", tag: :person, min_confidence_score: 0.25)
@@ -199,6 +203,13 @@ This will return
   @mapping={},
   @output="Ralph can be reached at ralph@thoughtbot.com"
 >
+```
+
+#### Error handling for invalid filter keys
+
+```ruby
+# This will raise ArgumentError: Unknown key: :invalid_filter. Valid keys are: ...
+TopSecret::Text.filter("some text", invalid_filter: some_filter)
 ```
 
 ### Custom Filters

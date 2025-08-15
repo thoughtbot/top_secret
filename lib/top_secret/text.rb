@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "active_support/core_ext/hash/keys"
+
 module TopSecret
   # Processes text to identify and redact sensitive information using configured filters.
   class Text
@@ -22,9 +24,10 @@ module TopSecret
     # Convenience method to create an instance and filter input
     #
     # @param input [String] The text to filter
-    # @param filters [Hash] Optional filters to override defaults
+    # @param filters [Hash] Optional filters to override defaults (only valid filter keys accepted)
     # @param custom_filters [Array] Additional custom filters to apply
     # @return [Result] The filtered result
+    # @raise [ArgumentError] If invalid filter keys are provided
     def self.filter(input, custom_filters: [], **filters)
       new(input, filters:, custom_filters:).filter
     end
@@ -33,7 +36,10 @@ module TopSecret
     #
     # @return [Result] Contains original input, redacted output, and mapping of labels to values
     # @raise [Error] If an unsupported filter is encountered
+    # @raise [ArgumentError] If invalid filter keys are provided
     def filter
+      validate_filters!
+
       all_filters.each do |filter|
         next if filter.nil?
 
@@ -98,9 +104,19 @@ module TopSecret
     #
     # @return [Array] Array of filter objects to apply
     def all_filters
-      merged_filters = default_filters.merge(filters)
-
       merged_filters.values.compact + TopSecret.custom_filters + custom_filters
+    end
+
+    def merged_filters
+      default_filters.merge(filters)
+    end
+
+    # Validates that all provided filter keys are recognized
+    #
+    # @return [void]
+    # @raise [ArgumentError] If invalid filter keys are provided
+    def validate_filters!
+      merged_filters.assert_valid_keys(*default_filters.keys)
     end
 
     # Returns the default filters configuration hash

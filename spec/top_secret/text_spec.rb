@@ -226,6 +226,16 @@ RSpec.describe TopSecret::Text do
         })
         expect(result.input).to eq(input)
       end
+
+      it "ignores invalid options" do
+        input = "192.168.1.1"
+        ip_address_filter = TopSecret::Filters::Regex.new(
+          label: "IP_ADDRESS",
+          regex: /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/
+        )
+
+        expect { TopSecret::Text.filter(input, ip_address_filter:) }.to raise_error(ArgumentError)
+      end
     end
 
     it "removes duplicate entries from the mapping" do
