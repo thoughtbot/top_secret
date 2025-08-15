@@ -8,12 +8,13 @@ module TopSecret
     # @param input [String] The original text to be filtered
     # @param filters [Hash, nil] Optional set of filters to override the defaults
     # @param custom_filters [Array] Additional custom filters to apply
-    def initialize(input, custom_filters: [], filters: {})
+    # @param model [Mitie::NER, nil] Optional pre-loaded MITIE model for performance
+    def initialize(input, custom_filters: [], filters: {}, model: nil)
       @input = input
       @output = input.dup
       @mapping = {}
 
-      @model = Mitie::NER.new(TopSecret.model_path)
+      @model = model || Mitie::NER.new(TopSecret.model_path)
       @doc = @model.doc(@output)
       @entities = @doc.entities
 
@@ -30,6 +31,63 @@ module TopSecret
     # @raise [ArgumentError] If invalid filter keys are provided
     def self.filter(input, custom_filters: [], **filters)
       new(input, filters:, custom_filters:).filter
+    end
+
+    # Filters multiple messages with globally consistent redaction labels
+    #
+    # Processes a collection of messages and ensures that identical sensitive values
+    # receive the same redaction labels across all messages. This is useful when
+    # processing conversation threads or document collections where consistency matters.
+    #
+    # @param messages [Array<String>] Array of text messages to filter
+    # @param custom_filters [Array] Additional custom filters to apply
+    # @param filters [Hash] Optional filters to override defaults (only valid filter keys accepted)
+    # @return [BatchResult] Contains global mapping and array of input/output pairs
+    # @raise [ArgumentError] If invalid filter keys are provided
+    #
+    # @example Basic usage
+    #   messages = ["Contact john@test.com", "Email john@test.com again"]
+    #   result = TopSecret::Text.filter_all(messages)
+    #   result.items[0].output # => "Contact [EMAIL_1]"
+    #   result.items[1].output # => "Email [EMAIL_1] again"
+    #   result.mapping # => { EMAIL_1: "john@test.com" }
+    #
+    # @example With custom filters
+    #   ip_filter = TopSecret::Filters::Regex.new(label: "IP", regex: /\d+\.\d+\.\d+\.\d+/)
+    #   result = TopSecret::Text.filter_all(messages, custom_filters: [ip_filter])
+    def self.filter_all(messages, custom_filters: [], **filters)
+      shared_model = Mitie::NER.new(TopSecret.model_path)
+
+      individual_results = messages.map do |message|
+        new(message, filters:, custom_filters:, model: shared_model).filter
+      end
+
+      global_mapping = {}
+      label_counters = {}
+
+      individual_results.each do |result|
+        result.mapping.each do |individual_key, value|
+          next if global_mapping.key?(value)
+
+          label_type = individual_key.to_s.rpartition("_").first
+
+          label_counters[label_type] ||= 0
+          label_counters[label_type] += 1
+          global_key = :"#{label_type}_#{label_counters[label_type]}"
+
+          global_mapping[value] = global_key
+        end
+      end
+
+      inverted_global_mapping = global_mapping.invert
+
+      items = individual_results.map do |result|
+        output = result.input.dup
+        inverted_global_mapping.each { |filter, value| output.gsub!(value, "[#{filter}]") }
+        BatchResult::Item.new(result.input, output)
+      end
+
+      BatchResult.new(mapping: global_mapping.invert, items:)
     end
 
     # Applies configured filters to the input, redacting matches and building a mapping.
