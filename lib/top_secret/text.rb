@@ -79,10 +79,11 @@ module TopSecret
         end
       end
 
+      inverted_global_mapping = global_mapping.invert
+
       items = individual_results.map do |result|
         output = result.input.dup
-        global_mapping.invert.each { |filter, value| output.gsub!(value, "[#{filter}]") }
-
+        inverted_global_mapping.each { |filter, value| output.gsub!(value, "[#{filter}]") }
         BatchResult::Item.new(result.input, output)
       end
 
