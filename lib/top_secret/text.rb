@@ -98,7 +98,17 @@ module TopSecret
     #
     # @return [Array] Array of filter objects to apply
     def all_filters
-      default_filters = {
+      merged_filters = default_filters.merge(filters)
+
+      merged_filters.values.compact + TopSecret.custom_filters + custom_filters
+    end
+
+    # Returns the default filters configuration hash
+    #
+    # @return [Hash] Hash containing all configured default filters, keyed by filter name
+    # @private
+    def default_filters
+      {
         credit_card_filter: TopSecret.credit_card_filter,
         email_filter: TopSecret.email_filter,
         phone_number_filter: TopSecret.phone_number_filter,
@@ -106,10 +116,6 @@ module TopSecret
         people_filter: TopSecret.people_filter,
         location_filter: TopSecret.location_filter
       }
-
-      merged_filters = default_filters.merge(filters)
-
-      merged_filters.values.compact + TopSecret.custom_filters + custom_filters
     end
   end
 end
