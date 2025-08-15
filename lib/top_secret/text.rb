@@ -55,18 +55,32 @@ module TopSecret
     #   ip_filter = TopSecret::Filters::Regex.new(label: "IP", regex: /\d+\.\d+\.\d+\.\d+/)
     #   result = TopSecret::Text.filter_all(messages, custom_filters: [ip_filter])
     def self.filter_all(messages, custom_filters: [], **filters)
+      # First pass: collect all individual results
+      individual_results = messages.map { |message| filter(message, custom_filters:, **filters) }
+
+      # Build global mapping tracking order of first occurrence across all messages
       global_mapping = {}
+      label_counters = {}
 
-      items = messages.map do |message|
-        result = filter(message, custom_filters:, **filters)
-        mapping = result.mapping
-        input = result.input
-        output = input.dup
+      individual_results.each do |result|
+        result.mapping.each do |individual_key, value|
+          next if global_mapping.key?(value)
 
-        mapping.each { |key, value| global_mapping[value] ||= key }
-        global_mapping.invert.each { |filter, value| output.gsub! value, "[#{filter}]" }
+          label_type = individual_key.to_s.rpartition("_").first
 
-        BatchResult::Item.new(input, output)
+          label_counters[label_type] ||= 0
+          label_counters[label_type] += 1
+          global_key = :"#{label_type}_#{label_counters[label_type]}"
+
+          global_mapping[value] = global_key
+        end
+      end
+
+      items = individual_results.map do |result|
+        output = result.input.dup
+        global_mapping.invert.each { |filter, value| output.gsub!(value, "[#{filter}]") }
+
+        BatchResult::Item.new(result.input, output)
       end
 
       BatchResult.new(mapping: global_mapping.invert, items:)
