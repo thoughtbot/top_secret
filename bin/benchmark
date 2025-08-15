@@ -1,0 +1,70 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# CI Performance Benchmark - optimized for automated testing
+require "bundler/setup"
+require "benchmark"
+require_relative "../lib/top_secret"
+
+# CI-optimized configuration
+ITERATIONS = 3
+WARMUP_ITERATIONS = 1  
+MAX_TIME_PER_MESSAGE_MS = 350
+MIN_SPEEDUP = 2.5
+
+# Small but representative test set
+TEST_MESSAGES = [
+  "Contact john@test.com with card 4242424242424242",
+  "Email ruby@example.org about 4141414141414141", 
+  "Call john@test.com regarding 4242424242424242"
+].freeze
+
+puts "=== Performance Benchmark ==="
+
+# Warmup
+WARMUP_ITERATIONS.times { TopSecret::Text.filter_all(TEST_MESSAGES) }
+
+# Benchmark individual calls
+individual_times = []
+ITERATIONS.times do
+  start = Time.now
+  TEST_MESSAGES.each { |msg| TopSecret::Text.filter(msg) }
+  individual_times << Time.now - start
+end
+
+# Benchmark batch calls
+batch_times = []
+ITERATIONS.times do
+  start = Time.now
+  TopSecret::Text.filter_all(TEST_MESSAGES)
+  batch_times << Time.now - start
+end
+
+# Calculate results
+avg_individual = individual_times.sum / ITERATIONS
+avg_batch = batch_times.sum / ITERATIONS
+speedup = avg_individual / avg_batch
+per_message_ms = (avg_batch / TEST_MESSAGES.size) * 1000
+
+puts "Batch time: #{(avg_batch * 1000).round(2)}ms"
+puts "Per message: #{per_message_ms.round(2)}ms"  
+puts "Speedup: #{speedup.round(2)}x"
+
+# Validation
+exit_code = 0
+
+if per_message_ms > MAX_TIME_PER_MESSAGE_MS
+  puts "❌ Performance regression: #{per_message_ms.round(2)}ms > #{MAX_TIME_PER_MESSAGE_MS}ms"
+  exit_code = 1
+end
+
+if speedup < MIN_SPEEDUP
+  puts "❌ Speedup regression: #{speedup.round(2)}x < #{MIN_SPEEDUP}x"  
+  exit_code = 1
+end
+
+if exit_code == 0
+  puts "✅ Performance benchmarks passed"
+end
+
+exit exit_code
