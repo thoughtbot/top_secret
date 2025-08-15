@@ -107,6 +107,10 @@ module TopSecret
       merged_filters.values.compact + TopSecret.custom_filters + custom_filters
     end
 
+    # Merges default filters with user-provided filter overrides
+    #
+    # @return [Hash] Hash containing default filters with any user overrides applied
+    # @private
     def merged_filters
       default_filters.merge(filters)
     end
