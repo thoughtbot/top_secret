@@ -55,8 +55,13 @@ module TopSecret
     #   ip_filter = TopSecret::Filters::Regex.new(label: "IP", regex: /\d+\.\d+\.\d+\.\d+/)
     #   result = TopSecret::Text.filter_all(messages, custom_filters: [ip_filter])
     def self.filter_all(messages, custom_filters: [], **filters)
-      # First pass: collect all individual results
-      individual_results = messages.map { |message| filter(message, custom_filters:, **filters) }
+      # Create shared instance to reuse MITIE model across all messages
+      shared_instance = new("", filters:, custom_filters:)
+
+      # First pass: collect all individual results using shared instance
+      individual_results = messages.map do |message|
+        shared_instance.filter_message(message)
+      end
 
       # Build global mapping tracking order of first occurrence across all messages
       global_mapping = {}
@@ -94,6 +99,42 @@ module TopSecret
     def filter
       validate_filters!
 
+      all_filters.each do |filter|
+        next if filter.nil?
+
+        values = case filter
+        when TopSecret::Filters::Regex
+          filter.call(input)
+        when TopSecret::Filters::NER
+          filter.call(entities)
+        else
+          raise Error, "Unsupported filter. Expected TopSecret::Filters::Regex or TopSecret::Filters::NER, but got #{filter.class}"
+        end
+        build_mapping(values, label: filter.label)
+      end
+
+      substitute_text
+
+      Result.new(input, output, mapping)
+    end
+
+    # Filters a specific message using this instance's pre-loaded model and filters
+    # This avoids recreating the MITIE model for each message in batch operations
+    #
+    # @param message [String] The text to filter
+    # @return [Result] Contains original input, redacted output, and mapping of labels to values
+    # @raise [Error] If an unsupported filter is encountered
+    def filter_message(message)
+      # Reset instance state for new message
+      @input = message
+      @output = message.dup
+      @mapping = {}
+
+      # Reprocess entities for new message using existing model
+      @doc = @model.doc(@output)
+      @entities = @doc.entities
+
+      # Apply filters using existing logic
       all_filters.each do |filter|
         next if filter.nil?
 
