@@ -8,12 +8,13 @@ module TopSecret
     # @param input [String] The original text to be filtered
     # @param filters [Hash, nil] Optional set of filters to override the defaults
     # @param custom_filters [Array] Additional custom filters to apply
-    def initialize(input, custom_filters: [], filters: {})
+    # @param model [Mitie::NER, nil] Optional pre-loaded MITIE model for performance
+    def initialize(input, custom_filters: [], filters: {}, model: nil)
       @input = input
       @output = input.dup
       @mapping = {}
 
-      @model = Mitie::NER.new(TopSecret.model_path)
+      @model = model || Mitie::NER.new(TopSecret.model_path)
       @doc = @model.doc(@output)
       @entities = @doc.entities
 
@@ -55,12 +56,12 @@ module TopSecret
     #   ip_filter = TopSecret::Filters::Regex.new(label: "IP", regex: /\d+\.\d+\.\d+\.\d+/)
     #   result = TopSecret::Text.filter_all(messages, custom_filters: [ip_filter])
     def self.filter_all(messages, custom_filters: [], **filters)
-      # Create shared instance to reuse MITIE model across all messages
-      shared_instance = new("", filters:, custom_filters:)
+      # Create shared model once for performance
+      shared_model = Mitie::NER.new(TopSecret.model_path)
 
-      # First pass: collect all individual results using shared instance
+      # First pass: collect all individual results using shared model
       individual_results = messages.map do |message|
-        shared_instance.filter_message(message)
+        new(message, filters:, custom_filters:, model: shared_model).filter
       end
 
       # Build global mapping tracking order of first occurrence across all messages
@@ -99,42 +100,6 @@ module TopSecret
     def filter
       validate_filters!
 
-      all_filters.each do |filter|
-        next if filter.nil?
-
-        values = case filter
-        when TopSecret::Filters::Regex
-          filter.call(input)
-        when TopSecret::Filters::NER
-          filter.call(entities)
-        else
-          raise Error, "Unsupported filter. Expected TopSecret::Filters::Regex or TopSecret::Filters::NER, but got #{filter.class}"
-        end
-        build_mapping(values, label: filter.label)
-      end
-
-      substitute_text
-
-      Result.new(input, output, mapping)
-    end
-
-    # Filters a specific message using this instance's pre-loaded model and filters
-    # This avoids recreating the MITIE model for each message in batch operations
-    #
-    # @param message [String] The text to filter
-    # @return [Result] Contains original input, redacted output, and mapping of labels to values
-    # @raise [Error] If an unsupported filter is encountered
-    def filter_message(message)
-      # Reset instance state for new message
-      @input = message
-      @output = message.dup
-      @mapping = {}
-
-      # Reprocess entities for new message using existing model
-      @doc = @model.doc(@output)
-      @entities = @doc.entities
-
-      # Apply filters using existing logic
       all_filters.each do |filter|
         next if filter.nil?
 
