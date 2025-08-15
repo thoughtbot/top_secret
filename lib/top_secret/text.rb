@@ -8,7 +8,7 @@ module TopSecret
     # @param input [String] The original text to be filtered
     # @param filters [Hash, nil] Optional set of filters to override the defaults
     # @param custom_filters [Array] Additional custom filters to apply
-    def initialize(input, filters: {}, custom_filters: [])
+    def initialize(input, custom_filters: [], filters: {})
       @input = input
       @output = input.dup
       @mapping = {}
