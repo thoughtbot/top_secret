@@ -69,6 +69,8 @@ module TopSecret
         result.mapping.each do |individual_key, value|
           next if global_mapping.key?(value)
 
+          # TODO: This assumes labels are formatted consistently.
+          # We need to account for the following for the case where a label could begin with an "_"
           label_type = individual_key.to_s.rpartition("_").first
 
           label_counters[label_type] ||= 0
