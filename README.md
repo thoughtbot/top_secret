@@ -203,6 +203,52 @@ result.items[0].output
 
 The key benefit is that identical values receive the same labels across all messages - notice how `ralph@thoughtbot.com` becomes `[EMAIL_1]` in both the first and second messages.
 
+### Restoring Filtered Text
+
+When external services (like LLMs) return responses containing filter placeholders, use `TopSecret::FilteredText.restore` to substitute them back with original values:
+
+```ruby
+# Filter messages before sending to LLM
+messages = ["Contact ralph@thoughtbot.com for details"]
+batch_result = TopSecret::Text.filter_all(messages)
+
+# Send filtered text to LLM: "Contact [EMAIL_1] for details"
+# LLM responds with: "I'll email [EMAIL_1] about this request"
+llm_response = "I'll email [EMAIL_1] about this request"
+
+# Restore the original values
+restore_result = TopSecret::FilteredText.restore(llm_response, mapping: batch_result.mapping)
+```
+
+This will return
+
+```ruby
+<TopSecret::FilteredText::Result
+  @output="I'll email ralph@thoughtbot.com about this request",
+  @restored=["[EMAIL_1]"],
+  @unrestored=[]
+>
+```
+
+Access the restored text
+
+```ruby
+restore_result.output
+# => "I'll email ralph@thoughtbot.com about this request"
+```
+
+Track which placeholders were restored
+
+```ruby
+restore_result.restored
+# => ["[EMAIL_1]"]
+
+restore_result.unrestored
+# => []
+```
+
+The restoration process tracks both successful and failed placeholder substitutions, allowing you to handle cases where the LLM response contains placeholders not found in your mapping.
+
 ### Advanced Examples
 
 #### Overriding the default filters
