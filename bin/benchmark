@@ -40,14 +40,27 @@ ITERATIONS.times do
   batch_times << Time.now - start
 end
 
+# Benchmark restoration calls
+restore_times = []
+batch_result = TopSecret::Text.filter_all(TEST_MESSAGES)
+test_response = "Contact [EMAIL_1] about [CREDIT_CARD_1] issue"
+ITERATIONS.times do
+  start = Time.now
+  TopSecret::FilteredText.restore(test_response, mapping: batch_result.mapping)
+  restore_times << Time.now - start
+end
+
 # Calculate results
 avg_individual = individual_times.sum / ITERATIONS
 avg_batch = batch_times.sum / ITERATIONS
+avg_restore = restore_times.sum / ITERATIONS
 speedup = avg_individual / avg_batch
 per_message_ms = (avg_batch / TEST_MESSAGES.size) * 1000
+restore_ms = avg_restore * 1000
 
 puts "Batch time: #{(avg_batch * 1000).round(2)}ms"
 puts "Per message: #{per_message_ms.round(2)}ms"  
+puts "Restore time: #{restore_ms.round(2)}ms"
 puts "Speedup: #{speedup.round(2)}x"
 
 # Validation
