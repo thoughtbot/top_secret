@@ -4,6 +4,8 @@
 
 -   Added `TopSecret::Text.filter_all` for batch processing multiple messages with globally consistent redaction labels
 -   Added `TopSecret::BatchResult` class to hold results from batch operations
+-   Added `TopSecret::FilteredText` class for restoring filtered text by substituting placeholders with original values
+-   Added `TopSecret::FilteredText::Result` class to track restoration success and failures
 
 ### Changed
 

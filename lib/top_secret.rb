@@ -14,6 +14,7 @@ require_relative "top_secret/error"
 require_relative "top_secret/batch_result"
 require_relative "top_secret/result"
 require_relative "top_secret/text"
+require_relative "top_secret/filtered_text"
 
 # TopSecret filters sensitive information from free text before it's sent to external services or APIs, such as chatbots and LLMs.
 #
