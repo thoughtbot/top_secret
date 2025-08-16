@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "active_support/core_ext/hash/keys"
+require_relative "text/result"
+require_relative "text/batch_result"
 
 module TopSecret
   # Processes text to identify and redact sensitive information using configured filters.
@@ -86,10 +88,10 @@ module TopSecret
       items = individual_results.map do |result|
         output = result.input.dup
         inverted_global_mapping.each { |filter, value| output.gsub!(value, "[#{filter}]") }
-        BatchResult::Item.new(result.input, output)
+        Text::BatchResult::Item.new(result.input, output)
       end
 
-      BatchResult.new(mapping: global_mapping.invert, items:)
+      Text::BatchResult.new(mapping: global_mapping.invert, items:)
     end
 
     # Applies configured filters to the input, redacting matches and building a mapping.
@@ -116,7 +118,7 @@ module TopSecret
 
       substitute_text
 
-      Result.new(input, output, mapping)
+      Text::Result.new(input, output, mapping)
     end
 
     private
