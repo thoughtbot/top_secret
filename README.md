@@ -125,7 +125,7 @@ TopSecret::Text.filter("Ralph can be reached at ralph@thoughtbot.com")
 This will return
 
 ```ruby
-<TopSecret::Result
+<TopSecret::Text::Result
   @input="Ralph can be reached at ralph@thoughtbot.com",
   @mapping={:EMAIL_1=>"ralph@thoughtbot.com", :PERSON_1=>"Ralph"},
   @output="[PERSON_1] can be reached at [EMAIL_1]"
@@ -173,12 +173,12 @@ result = TopSecret::Text.filter_all(messages)
 This will return
 
 ```ruby
-<TopSecret::BatchResult
+<TopSecret::Text::BatchResult
   @mapping={:EMAIL_1=>"ralph@thoughtbot.com", :EMAIL_2=>"ruby@thoughtbot.com"},
   @items=[
-    <TopSecret::BatchResult::Item @input="Contact ralph@thoughtbot.com for details", @output="Contact [EMAIL_1] for details">,
-    <TopSecret::BatchResult::Item @input="Email ralph@thoughtbot.com again if needed", @output="Email [EMAIL_1] again if needed">,
-    <TopSecret::BatchResult::Item @input="Also CC ruby@thoughtbot.com on the thread", @output="Also CC [EMAIL_2] on the thread">
+    <TopSecret::Text::BatchResult::Item @input="Contact ralph@thoughtbot.com for details", @output="Contact [EMAIL_1] for details">,
+    <TopSecret::Text::BatchResult::Item @input="Email ralph@thoughtbot.com again if needed", @output="Email [EMAIL_1] again if needed">,
+    <TopSecret::Text::BatchResult::Item @input="Also CC ruby@thoughtbot.com on the thread", @output="Also CC [EMAIL_2] on the thread">
   ]
 >
 ```
@@ -272,7 +272,7 @@ TopSecret::Text.filter("Ralph can be reached at ralph[at]thoughtbot.com",
 This will return
 
 ```ruby
-<TopSecret::Result
+<TopSecret::Text::Result
   @input="Ralph can be reached at ralph[at]thoughtbot.com",
   @mapping={:EMAIL_ADDRESS_1=>"ralph[at]thoughtbot.com", :NAME_1=>"Ralph", :NAME_2=>"ralph["},
   @output="[NAME_1] can be reached at [EMAIL_ADDRESS_1]"
@@ -291,7 +291,7 @@ TopSecret::Text.filter("Ralph can be reached at ralph@thoughtbot.com",
 This will return
 
 ```ruby
-<TopSecret::Result
+<TopSecret::Text::Result
   @input="Ralph can be reached at ralph@thoughtbot.com",
   @mapping={},
   @output="Ralph can be reached at ralph@thoughtbot.com"
@@ -323,7 +323,7 @@ TopSecret::Text.filter("Ralph's IP address is 192.168.1.1",
 This will return
 
 ```ruby
-<TopSecret::Result
+<TopSecret::Text::Result
   @input="Ralph's IP address is 192.168.1.1",
   @mapping={:PERSON_1=>"Ralph", :IP_ADDRESS_1=>"192.168.1.1"},
   @output="[PERSON_1]'s IP address is [IP_ADDRESS_1]"
@@ -349,7 +349,7 @@ TopSecret::Text.filter("Ralph's favorite programming language is Ruby.",
 This will return
 
 ```ruby
-<TopSecret::Result
+<TopSecret::Text::Result
   @input="Ralph's favorite programming language is Ruby.",
   @mapping={:PERSON_1=>"Ralph", :LANGUAGE_1=>"Ruby"},
   @output="[PERSON_1]'s favorite programming language is [LANGUAGE_1]"

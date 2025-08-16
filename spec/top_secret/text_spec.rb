@@ -286,10 +286,10 @@ RSpec.describe TopSecret::Text do
       expect(result.output).to eq("[LOCATION_1]")
     end
 
-    it "returns a TopSecret::Result" do
+    it "returns a TopSecret::Text::Result" do
       result = TopSecret::Text.filter("")
 
-      expect(result).to be_an_instance_of(TopSecret::Result)
+      expect(result).to be_an_instance_of(TopSecret::Text::Result)
     end
 
     context "when there are multiple unique email addresses" do
@@ -503,10 +503,10 @@ RSpec.describe TopSecret::Text do
       end
     end
 
-    it "returns TopSecret::BatchResult" do
+    it "returns TopSecret::Text::BatchResult" do
       result = TopSecret::Text.filter_all(["", ""])
 
-      expect(result).to be_an_instance_of(TopSecret::BatchResult)
+      expect(result).to be_an_instance_of(TopSecret::Text::BatchResult)
     end
 
     context "when the filters option is passed" do
