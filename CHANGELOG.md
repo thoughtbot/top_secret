@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [0.2.0] - 2025-08-18
+
 ### Added
 
 -   Added `TopSecret::Text.filter_all` for batch processing multiple messages with globally consistent redaction labels
