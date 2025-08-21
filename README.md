@@ -34,6 +34,11 @@ gem install top_secret
 >
 > You'll need to download and extract [ner_model.dat][] first.
 
+> [!TIP]
+> Due to its large size, you'll likely want to avoid committing [ner_model.dat][] into version control.
+>
+> You'll need to ensure the file exists in deployed environments. See relevant [discussion][discussions_60] for details.
+
 By default, Top Secret assumes the file will live at the root of your project, but this can be configured.
 
 ```ruby
@@ -248,6 +253,61 @@ restore_result.unrestored
 ```
 
 The restoration process tracks both successful and failed placeholder substitutions, allowing you to handle cases where the LLM response contains placeholders not found in your mapping.
+
+### Working with LLMs
+
+When sending filtered information to LLMs, they'll likely need to be instructed on how to handle those filters. Otherwise, we risk them not being returned in the response, which would break the restoration process.
+
+Here's a recommended approach:
+
+```ruby
+instructions = <<~TEXT
+  I'm going to send filtered information to you in the form of free text.
+  If you need to refer to the filtered information in a response, just reference it by the filter.
+TEXT
+```
+
+Complete example:
+
+```ruby
+require "openai"
+require "top_secret"
+
+openai = OpenAI::Client.new(
+  api_key: Rails.application.credentials.openai.api_key!
+)
+
+original_messages = [
+  "Ralph lives in Boston.",
+  "You can reach them at ralph@thoughtbot.com or 877-976-2687"
+]
+
+# Filter all messages
+result = TopSecret::Text.filter_all(original_messages)
+filtered_messages = result.items.map(&:output)
+
+user_messages = filtered_messages.map { {role: "user", content: it} }
+
+# Instruct LLM how to handle filtered messages
+instructions = <<~TEXT
+  I'm going to send filtered information to you in the form of free text.
+  If you need to refer to the filtered information in a response, just reference it by the filter.
+TEXT
+
+messages = [
+  {role: "system", content: instructions},
+  *user_messages
+]
+
+chat_completion = openai.chat.completions.create(messages:, model: :"gpt-5")
+response = chat_completion.choices.last.message.content
+
+# Restore the response from the mapping
+mapping = result.mapping
+restored_response = TopSecret::FilteredText.restore(response, mapping:).output
+
+puts(restored_response)
+```
 
 ### Advanced Examples
 
@@ -523,3 +583,4 @@ We are [available for hire][hire].
 [train]: https://github.com/ankane/mitie-ruby?tab=readme-ov-file#training
 [Regex filters]: https://github.com/thoughtbot/top_secret/blob/main/lib/top_secret/filters/regex.rb
 [NER filters]: https://github.com/thoughtbot/top_secret/blob/main/lib/top_secret/filters/ner.rb
+[discussions_60]: https://github.com/thoughtbot/top_secret/discussions/60
