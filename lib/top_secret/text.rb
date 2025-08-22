@@ -17,8 +17,6 @@ module TopSecret
       @mapping = {}
 
       @model = model || Mitie::NER.new(TopSecret.model_path)
-      @doc = @model.doc(@output)
-      @entities = @doc.entities
 
       @filters = filters
       @custom_filters = custom_filters
@@ -100,6 +98,9 @@ module TopSecret
     # @raise [Error] If an unsupported filter is encountered
     # @raise [ArgumentError] If invalid filter keys are provided
     def filter
+      @doc ||= model.doc(@output)
+      @entities ||= doc.entities
+
       validate_filters!
 
       all_filters.each do |filter|
@@ -131,6 +132,12 @@ module TopSecret
 
     # @return [Hash] Mapping from redaction labels to original values
     attr_reader :mapping
+
+    # @return [Object] The NER model (typically Mitie::NER or a test double)
+    attr_reader :model
+
+    # @return [Object] The document created from the output text (typically Mitie::Document or a test double)
+    attr_reader :doc
 
     # @return [Array<Hash>] Named entities extracted by MITIE
     attr_reader :entities
