@@ -101,21 +101,7 @@ module TopSecret
       @entities ||= doc.entities
 
       validate_filters!
-
-      all_filters.each do |filter|
-        next if filter.nil?
-
-        values = case filter
-        when TopSecret::Filters::Regex
-          filter.call(input)
-        when TopSecret::Filters::NER
-          filter.call(entities)
-        else
-          raise Error, "Unsupported filter. Expected TopSecret::Filters::Regex or TopSecret::Filters::NER, but got #{filter.class}"
-        end
-        build_mapping(values, label: filter.label)
-      end
-
+      apply_filters
       substitute_text
 
       Text::Result.new(input, output, mapping)
@@ -147,6 +133,20 @@ module TopSecret
     # @return [Array] Custom filters to apply
     attr_reader :custom_filters
 
+    def apply_filters = all_filters.each { |it| apply_filter(it) }
+
+    def apply_filter(filter)
+      values = case filter
+      when TopSecret::Filters::Regex
+        filter.call(input)
+      when TopSecret::Filters::NER
+        filter.call(entities)
+      else
+        raise Error, "Unsupported filter. Expected TopSecret::Filters::Regex or TopSecret::Filters::NER, but got #{filter.class}"
+      end
+      build_mapping(values, label: filter.label)
+    end
+
     # Builds the mapping of label keys to matched values, indexed uniquely.
     #
     # @param values [Array<String>] Values matched by a filter
@@ -172,7 +172,7 @@ module TopSecret
     #
     # @return [Array] Array of filter objects to apply
     def all_filters
-      merged_filters.values.compact + TopSecret.custom_filters + custom_filters
+      (merged_filters.values + TopSecret.custom_filters + custom_filters).compact
     end
 
     # Merges default filters with user-provided filter overrides
