@@ -97,9 +97,6 @@ module TopSecret
     # @raise [Error] If an unsupported filter is encountered
     # @raise [ArgumentError] If invalid filter keys are provided
     def filter
-      @doc ||= model.doc(@output)
-      @entities ||= doc.entities
-
       validate_filters!
       apply_filters
       substitute_text
@@ -124,9 +121,6 @@ module TopSecret
     # @return [Object] The document created from the output text (typically Mitie::Document or a test double)
     attr_reader :doc
 
-    # @return [Array<Hash>] Named entities extracted by MITIE
-    attr_reader :entities
-
     # @return [Hash] Active filters used for redaction
     attr_reader :filters
 
@@ -145,6 +139,11 @@ module TopSecret
         raise Error, "Unsupported filter. Expected TopSecret::Filters::Regex or TopSecret::Filters::NER, but got #{filter.class}"
       end
       build_mapping(values, label: filter.label)
+    end
+
+    # @return [Array<Hash>] Named entities extracted by MITIE
+    def entities
+      @entities ||= model.doc(@output).entities
     end
 
     # Builds the mapping of label keys to matched values, indexed uniquely.
