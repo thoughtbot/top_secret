@@ -88,7 +88,7 @@ module TopSecret
         Text::BatchResult::Item.new(result.input, output)
       end
 
-      Text::BatchResult.new(mapping: global_mapping.invert, items:)
+      Text::BatchResult.new(mapping: inverted_global_mapping, items:)
     end
 
     # Applies configured filters to the input, redacting matches and building a mapping.
