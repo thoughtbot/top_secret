@@ -63,6 +63,47 @@ RSpec.describe "TopSecret Configuration" do
     end
   end
 
+  context "when TopSecret.model_path is nil" do
+    before do
+      expect(Mitie::NER).not_to receive(:new)
+    end
+
+    around do |example|
+      original = TopSecret.model_path
+      TopSecret.configure { _1.model_path = nil }
+
+      example.call
+    ensure
+      TopSecret.configure { _1.model_path = original }
+    end
+
+    it "does not error" do
+      expect { TopSecret::Text.filter("") }.not_to raise_error
+      expect { TopSecret::Text.filter_all([""]) }.not_to raise_error
+    end
+
+    context "when a custom NER filter is passed" do
+      it "does not error" do
+        ip_filter = TopSecret::Filters::NER.new(
+          label: "IP_ADDRESS",
+          tag: :ip_address
+        )
+
+        expect { TopSecret::Text.filter("", custom_filters: [ip_filter]) }.not_to raise_error
+        expect { TopSecret::Text.filter_all([""], custom_filters: [ip_filter]) }.not_to raise_error
+      end
+    end
+
+    context "when a custom model is passed to the initializer" do
+      it "uses that model" do
+        entities = double("Entities", entities: [])
+        model = double("Model", doc: entities)
+
+        expect { TopSecret::Text.new("", model:).filter }.not_to raise_error
+      end
+    end
+  end
+
   it "allows email filter to be overridden" do
     original = TopSecret.email_filter
 
