@@ -73,8 +73,8 @@ module TopSecret
           # We need to account for the following for the case where a label could begin with an "_"
           label_type = individual_key.to_s.rpartition("_").first
 
-          label_counters[label_type] += 1
-          global_key = :"#{label_type}_#{label_counters[label_type]}"
+          label_count = label_counters[label_type] += 1
+          global_key = :"#{label_type}_#{label_count}"
 
           global_mapping[value] = global_key
         end
