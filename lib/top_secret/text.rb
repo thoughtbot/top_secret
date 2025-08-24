@@ -93,6 +93,34 @@ module TopSecret
       Text::BatchResult.new(mapping: global_mapping.invert, items:)
     end
 
+    def self.scan(input)
+      new(input).scan
+    end
+
+    def scan
+      @doc ||= model.doc(@output) if model
+      @entities ||= doc.entities if model
+
+      validate_filters!
+
+      all_filters.each do |filter|
+        next if filter.nil?
+
+        values = case filter
+        when TopSecret::Filters::Regex
+          filter.call(input)
+        when TopSecret::Filters::NER
+          filter.call(entities)
+        else
+          raise Error, "Unsupported filter. Expected TopSecret::Filters::Regex or TopSecret::Filters::NER, but got #{filter.class}"
+        end
+        build_mapping(values, label: filter.label)
+      end
+
+      ::ScanResult.new(mapping:, sensitive?: mapping.any?)
+    end
+    ::ScanResult = Struct.new(:mapping, :sensitive?, keyword_init: true)
+
     # Applies configured filters to the input, redacting matches and building a mapping.
     #
     # @return [Result] Contains original input, redacted output, and mapping of labels to values

@@ -638,4 +638,37 @@ RSpec.describe TopSecret::Text do
       end
     end
   end
+
+  describe ".scan" do
+    let(:ralph) { build_entity(text: "Ralph", tag: :person) }
+    let(:boston) { build_entity(text: "Boston", tag: :location) }
+
+    before do
+      stub_ner_entities(ralph, boston)
+    end
+
+    it "determines if sensitive information exists in free text and creates a mapping" do
+      input = <<~TEXT
+        My name is Ralph
+        My location is Boston
+        My email address is user@example.com
+        My credit card numbers are 4242-4242-4242-4242 and 4141414141414141
+        My social security number is 123-45-6789
+        My phone number is 555-555-5555
+      TEXT
+
+      result = TopSecret::Text.scan(input)
+
+      expect(result.sensitive?).to eq(true)
+      expect(result.mapping).to eq({
+        EMAIL_1: "user@example.com",
+        CREDIT_CARD_1: "4242-4242-4242-4242",
+        CREDIT_CARD_2: "4141414141414141",
+        SSN_1: "123-45-6789",
+        PHONE_NUMBER_1: "555-555-5555",
+        PERSON_1: "Ralph",
+        LOCATION_1: "Boston"
+      })
+    end
+  end
 end
