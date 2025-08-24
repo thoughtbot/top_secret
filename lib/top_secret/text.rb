@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "active_support/core_ext/hash/keys"
+require_relative "null_model"
 require_relative "text/result"
 require_relative "text/batch_result"
 
@@ -16,7 +17,7 @@ module TopSecret
       @output = input.dup
       @mapping = {}
 
-      @model = model || Mitie::NER.new(TopSecret.model_path)
+      @model = model || default_model
 
       @filters = filters
       @custom_filters = custom_filters
@@ -56,7 +57,7 @@ module TopSecret
     #   ip_filter = TopSecret::Filters::Regex.new(label: "IP", regex: /\d+\.\d+\.\d+\.\d+/)
     #   result = TopSecret::Text.filter_all(messages, custom_filters: [ip_filter])
     def self.filter_all(messages, custom_filters: [], **filters)
-      shared_model = Mitie::NER.new(TopSecret.model_path)
+      shared_model = TopSecret.model_path ? Mitie::NER.new(TopSecret.model_path) : nil
 
       individual_results = messages.map do |message|
         new(message, filters:, custom_filters:, model: shared_model).filter
@@ -98,8 +99,8 @@ module TopSecret
     # @raise [Error] If an unsupported filter is encountered
     # @raise [ArgumentError] If invalid filter keys are provided
     def filter
-      @doc ||= model.doc(@output)
-      @entities ||= doc.entities
+      @doc ||= model.doc(@output) if model
+      @entities ||= doc.entities if model
 
       validate_filters!
 
@@ -205,6 +206,18 @@ module TopSecret
         people_filter: TopSecret.people_filter,
         location_filter: TopSecret.location_filter
       }
+    end
+
+    # Creates the default model based on configuration.
+    # Returns a MITIE NER model if a model path is configured, otherwise returns a null model.
+    #
+    # @return [Mitie::NER, NullModel] The model instance to use for NER processing
+    def default_model
+      if TopSecret.model_path
+        Mitie::NER.new(TopSecret.model_path)
+      else
+        NullModel.new
+      end
     end
   end
 end

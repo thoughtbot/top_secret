@@ -1,5 +1,14 @@
 ## [Unreleased]
 
+### Added
+
+-   Added support for disabling NER filtering by setting `model_path` to `nil` for improved performance and deployment flexibility
+
+### Changed
+
+-   Improved performance by implementing lazy loading of MITIE model and document processing
+-   NER filtering now gracefully falls back when MITIE model is unavailable, continuing with regex-based filters only
+
 ## [0.2.0] - 2025-08-18
 
 ### Added

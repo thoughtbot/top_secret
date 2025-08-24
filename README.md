@@ -38,6 +38,8 @@ gem install top_secret
 > Due to its large size, you'll likely want to avoid committing [ner_model.dat][] into version control.
 >
 > You'll need to ensure the file exists in deployed environments. See relevant [discussion][discussions_60] for details.
+>
+> Alternatively, you can disable NER filtering entirely by setting `model_path` to `nil` if you only need regex-based filters (credit cards, emails, phone numbers, SSNs). This improves performance and eliminates the model file dependency.
 
 By default, Top Secret assumes the file will live at the root of your project, but this can be configured.
 
@@ -479,6 +481,22 @@ TopSecret.configure do |config|
   config.model_path = "path/to/ner_model.dat"
 end
 ```
+
+### Disabling NER filtering
+
+For improved performance or when the MITIE model file cannot be deployed, you can disable NER-based filtering entirely. This will disable people and location detection but retain all regex-based filters (credit cards, emails, phone numbers, SSNs):
+
+```ruby
+TopSecret.configure do |config|
+  config.model_path = nil
+end
+```
+
+This is useful in environments where:
+
+-   The model file cannot be deployed due to size constraints
+-   You only need regex-based filtering
+-   You want to optimize for performance over NER capabilities
 
 ### Overriding the confidence score
 
