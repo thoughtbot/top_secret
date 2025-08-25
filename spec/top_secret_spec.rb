@@ -1,6 +1,14 @@
 # frozen_string_literal: true
 
+require "spec_helper"
+
 RSpec.describe TopSecret do
+  before do
+    doc = instance_double("Mitie::Document", entities: [])
+    ner = instance_double("Mitie::NER", doc:)
+    allow(Mitie::NER).to receive(:new).and_return(ner)
+  end
+
   it "has a version number" do
     expect(TopSecret::VERSION).not_to be nil
   end
@@ -45,7 +53,7 @@ RSpec.describe "TopSecret Configuration" do
     expect(result.output).to eq("Ralph")
     expect(result.mapping).to eq({})
   ensure
-    TopSecret.configure { _1.min_confidence_score = original }
+    TopSecret.configure { |config| config.min_confidence_score = original }
   end
 
   context "when the TopSecret.model_path configuration is overridden" do
@@ -59,7 +67,7 @@ RSpec.describe "TopSecret Configuration" do
 
       expect(Mitie::NER).to have_received(:new).with("custom_path.dat")
     ensure
-      TopSecret.configure { _1.model_path = original }
+      TopSecret.configure { |config| config.model_path = original }
     end
   end
 
@@ -70,11 +78,11 @@ RSpec.describe "TopSecret Configuration" do
 
     around do |example|
       original = TopSecret.model_path
-      TopSecret.configure { _1.model_path = nil }
+      TopSecret.configure { |config| config.model_path = nil }
 
       example.call
     ensure
-      TopSecret.configure { _1.model_path = original }
+      TopSecret.configure { |config| config.model_path = original }
     end
 
     it "does not error" do
@@ -121,7 +129,7 @@ RSpec.describe "TopSecret Configuration" do
       email_1: "user[at]example.com"
     })
   ensure
-    TopSecret.configure { _1.email_filter = original }
+    TopSecret.configure { |config| config.email_filter = original }
   end
 
   it "allows email filter to be disabled" do
@@ -136,7 +144,7 @@ RSpec.describe "TopSecret Configuration" do
     expect(result.output).to eq("user@example.com")
     expect(result.mapping).to eq({})
   ensure
-    TopSecret.configure { _1.email_filter = original }
+    TopSecret.configure { |config| config.email_filter = original }
   end
 
   it "respects custom Regex filters" do

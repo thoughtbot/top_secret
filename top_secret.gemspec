@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.description = "Filter sensitive information from free text before sending it to external services or APIs, such as chatbots and LLMs."
   spec.homepage = "https://github.com/thoughtbot/top_secret"
   spec.license = "MIT"
-  spec.required_ruby_version = ">= 3.2.0"
+  spec.required_ruby_version = ">= 3.1.0"
 
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = spec.homepage
@@ -31,7 +31,7 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "activesupport", "~> 8.0", ">= 8.0.2"
+  spec.add_dependency "activesupport", ">= 7.0.0", "< 8.0"
   spec.add_dependency "mitie", "~> 0.3.2"
 
   # For more information and examples about making a new gem, check out our

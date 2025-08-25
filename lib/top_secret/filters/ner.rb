@@ -21,8 +21,8 @@ module TopSecret
       # @param entities [Array<Hash>] List of entity hashes with keys :tag, :score, and :text
       # @return [Array<String>] Matched entity texts
       def call(entities)
-        tags = entities.filter { _1.fetch(:tag) == tag && _1.fetch(:score) >= (min_confidence_score || TopSecret.min_confidence_score) }
-        tags.map { _1.fetch(:text) }
+        tags = entities.filter { |entity| entity.fetch(:tag) == tag && entity.fetch(:score) >= (min_confidence_score || TopSecret.min_confidence_score) }
+        tags.map { |entity| entity.fetch(:text) }
       end
 
       private
