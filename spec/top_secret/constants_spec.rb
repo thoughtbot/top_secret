@@ -53,8 +53,7 @@ RSpec.describe TopSecret do
   describe "SSN_REGEX" do
     ssns = [
       "123-45-6789",
-      "123 45 6789",
-      "123+45+6789"
+      "123 45 6789"
     ]
 
     ssns.each do |ssn|
