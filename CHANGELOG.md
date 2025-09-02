@@ -5,6 +5,7 @@
 -   Added `TopSecret::Text.scan` method for detecting sensitive information without redacting text
 -   Added `TopSecret::Text::ScanResult` class to hold scan operation results with `mapping` and `sensitive?` methods
 -   Added support for disabling NER filtering by setting `model_path` to `nil` for improved performance and deployment flexibility
+-   Added support for Rails 7.0 and newer
 
 ### Changed
 
