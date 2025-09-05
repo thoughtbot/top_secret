@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 module TopSecret
+  # @return [String] The path to the NER model file
+  MODEL_PATH = "ner_model.dat"
+
   # @return [Regexp] Matches credit card numbers
   CREDIT_CARD_REGEX = /
     \b[3456]\d{15}\b |

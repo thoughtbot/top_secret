@@ -45,7 +45,7 @@ require_relative "top_secret/filtered_text"
 module TopSecret
   include ActiveSupport::Configurable
 
-  config_accessor :model_path, default: "ner_model.dat"
+  config_accessor :model_path, default: MODEL_PATH
   config_accessor :min_confidence_score, default: MIN_CONFIDENCE_SCORE
 
   config_accessor :custom_filters, default: []
