@@ -3,6 +3,7 @@
 # dependencies
 require "active_support/configurable"
 require "active_support/ordered_options"
+require "active_support/core_ext/module/delegation"
 require "mitie"
 
 # modules

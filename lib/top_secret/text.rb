@@ -166,7 +166,7 @@ module TopSecret
 
       substitute_text if scan_result.sensitive?
 
-      Text::Result.new(input, output, scan_result.mapping)
+      Text::Result.new(input, output, scan_result)
     end
 
     private
