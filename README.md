@@ -163,6 +163,65 @@ result.mapping
 # => {:EMAIL_1=>"ralph@thoughtbot.com", :PERSON_1=>"Ralph"}
 ```
 
+### Scanning for Sensitive Information
+
+Use `TopSecret::Text.scan` to detect sensitive information without redacting the text. This is useful when you only need to check if sensitive data exists or get a mapping of what was found:
+
+```ruby
+TopSecret::Text.scan("Ralph can be reached at ralph@thoughtbot.com")
+```
+
+This will return
+
+```ruby
+<TopSecret::Text::ScanResult
+  @mapping={:EMAIL_1=>"ralph@thoughtbot.com", :PERSON_1=>"Ralph"}
+>
+```
+
+Check if sensitive information was found
+
+```ruby
+result.sensitive?
+
+# => true
+```
+
+View the mapping of found sensitive information
+
+```ruby
+result.mapping
+
+# => {:EMAIL_1=>"ralph@thoughtbot.com", :PERSON_1=>"Ralph"}
+```
+
+The `scan` method accepts the same filter options as `filter`:
+
+```ruby
+# Override default filters
+email_filter =  TopSecret::Filters::Regex.new(
+  label: "EMAIL_ADDRESS",
+  regex: /\w+\[at\]\w+\.\w+/
+)
+result = TopSecret::Text.scan("Contact user[at]example.com", email_filter:)
+result.mapping
+# => {:EMAIL_ADDRESS_1=>"user[at]example.com"}
+
+# Disable specific filters
+result = TopSecret::Text.scan("Ralph works in Boston", people_filter: nil)
+result.mapping
+# => {:LOCATION_1=>"Boston"}
+
+# Add custom filters
+ip_filter = TopSecret::Filters::Regex.new(
+  label: "IP_ADDRESS",
+  regex: /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/
+)
+result = TopSecret::Text.scan("Server IP is 192.168.1.1", custom_filters: [ip_filter])
+result.mapping
+# => {:IP_ADDRESS_1=>"192.168.1.1"}
+```
+
 ### Batch Processing
 
 When processing multiple messages, use `filter_all` to ensure consistent redaction labels across all messages:
