@@ -638,4 +638,192 @@ RSpec.describe TopSecret::Text do
       end
     end
   end
+
+  describe ".scan" do
+    let(:ralph) { build_entity(text: "Ralph", tag: :person) }
+    let(:boston) { build_entity(text: "Boston", tag: :location) }
+
+    before do
+      stub_ner_entities(ralph, boston)
+    end
+
+    it "determines if sensitive information exists in free text and creates a mapping" do
+      input = <<~TEXT
+        My name is Ralph
+        My location is Boston
+        My email address is user@example.com
+        My credit card numbers are 4242-4242-4242-4242 and 4141414141414141
+        My social security number is 123-45-6789
+        My phone number is 555-555-5555
+      TEXT
+
+      result = TopSecret::Text.scan(input)
+
+      expect(result.sensitive?).to eq(true)
+      expect(result.mapping).to eq({
+        EMAIL_1: "user@example.com",
+        CREDIT_CARD_1: "4242-4242-4242-4242",
+        CREDIT_CARD_2: "4141414141414141",
+        SSN_1: "123-45-6789",
+        PHONE_NUMBER_1: "555-555-5555",
+        PERSON_1: "Ralph",
+        LOCATION_1: "Boston"
+      })
+    end
+
+    context "when the filters option is passed" do
+      it "overrides existing Regex filters" do
+        input = <<~TEXT
+          My name is Ralph
+          My location is Boston
+          My email address is user[at]example.com
+          My credit card numbers are 4242-4242-4242-4242 and 4141414141414141
+          My social security number is 123-45-6789
+          My phone number is 555-555-5555
+        TEXT
+
+        result = TopSecret::Text.scan(input, email_filter: TopSecret::Filters::Regex.new(
+          label: "EMAIL_ADDRESS",
+          regex: /user\[at\]example\.com/
+        ))
+
+        expect(result.sensitive?).to eq(true)
+        expect(result.mapping).to eq({
+          EMAIL_ADDRESS_1: "user[at]example.com",
+          CREDIT_CARD_1: "4242-4242-4242-4242",
+          CREDIT_CARD_2: "4141414141414141",
+          SSN_1: "123-45-6789",
+          PHONE_NUMBER_1: "555-555-5555",
+          PERSON_1: "Ralph",
+          LOCATION_1: "Boston"
+        })
+      end
+
+      it "overrides existing NER filters" do
+        score = 0.25
+        ralph = build_entity(text: "Ralph", tag: :person, score:)
+        stub_ner_entities(ralph, boston)
+
+        input = <<~TEXT
+          My name is Ralph
+          My location is Boston
+          My email address is user@example.com
+          My credit card numbers are 4242-4242-4242-4242 and 4141414141414141
+          My social security number is 123-45-6789
+          My phone number is 555-555-5555
+        TEXT
+
+        result = TopSecret::Text.scan(input, people_filter: TopSecret::Filters::NER.new(
+          label: "NAME",
+          tag: :person,
+          min_confidence_score: score
+        ))
+
+        expect(result.sensitive?).to eq(true)
+        expect(result.mapping).to eq({
+          EMAIL_1: "user@example.com",
+          CREDIT_CARD_1: "4242-4242-4242-4242",
+          CREDIT_CARD_2: "4141414141414141",
+          SSN_1: "123-45-6789",
+          PHONE_NUMBER_1: "555-555-5555",
+          NAME_1: "Ralph",
+          LOCATION_1: "Boston"
+        })
+      end
+
+      it "ignores existing filters" do
+        input = <<~TEXT
+          My name is Ralph
+          My location is Boston
+          My email address is user@example.com
+          My credit card numbers are 4242-4242-4242-4242 and 4141414141414141
+          My social security number is 123-45-6789
+          My phone number is 555-555-5555
+        TEXT
+
+        result = TopSecret::Text.scan(input, email_filter: nil)
+
+        expect(result.sensitive?).to eq(true)
+        expect(result.mapping).to eq({
+          CREDIT_CARD_1: "4242-4242-4242-4242",
+          CREDIT_CARD_2: "4141414141414141",
+          SSN_1: "123-45-6789",
+          PHONE_NUMBER_1: "555-555-5555",
+          PERSON_1: "Ralph",
+          LOCATION_1: "Boston"
+        })
+      end
+
+      it "respects new Regex filters" do
+        input = <<~TEXT
+          My name is Ralph
+          My location is Boston
+          My email address is user@example.com
+          My credit card numbers are 4242-4242-4242-4242 and 4141414141414141
+          My social security number is 123-45-6789
+          My phone number is 555-555-5555
+          My IP address is 192.168.1.1
+        TEXT
+
+        result = TopSecret::Text.scan(input, custom_filters: [TopSecret::Filters::Regex.new(
+          label: "IP_ADDRESS",
+          regex: /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/
+        )])
+
+        expect(result.sensitive?).to eq(true)
+        expect(result.mapping).to eq({
+          EMAIL_1: "user@example.com",
+          CREDIT_CARD_1: "4242-4242-4242-4242",
+          CREDIT_CARD_2: "4141414141414141",
+          SSN_1: "123-45-6789",
+          PHONE_NUMBER_1: "555-555-5555",
+          PERSON_1: "Ralph",
+          LOCATION_1: "Boston",
+          IP_ADDRESS_1: "192.168.1.1"
+        })
+      end
+
+      it "respects new NER filters" do
+        ip_address = build_entity(text: "192.168.1.1", tag: :ip_address)
+        stub_ner_entities(ralph, boston, ip_address)
+
+        input = <<~TEXT
+          My name is Ralph
+          My location is Boston
+          My email address is user@example.com
+          My credit card numbers are 4242-4242-4242-4242 and 4141414141414141
+          My social security number is 123-45-6789
+          My phone number is 555-555-5555
+          My IP address is 192.168.1.1
+        TEXT
+
+        result = TopSecret::Text.scan(input, custom_filters: [TopSecret::Filters::NER.new(
+          label: "IP_ADDRESS",
+          tag: :ip_address
+        )])
+
+        expect(result.sensitive?).to eq(true)
+        expect(result.mapping).to eq({
+          EMAIL_1: "user@example.com",
+          CREDIT_CARD_1: "4242-4242-4242-4242",
+          CREDIT_CARD_2: "4141414141414141",
+          SSN_1: "123-45-6789",
+          PHONE_NUMBER_1: "555-555-5555",
+          PERSON_1: "Ralph",
+          LOCATION_1: "Boston",
+          IP_ADDRESS_1: "192.168.1.1"
+        })
+      end
+
+      it "ignores invalid options" do
+        input = "192.168.1.1"
+        ip_address_filter = TopSecret::Filters::Regex.new(
+          label: "IP_ADDRESS",
+          regex: /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/
+        )
+
+        expect { TopSecret::Text.scan(input, ip_address_filter:) }.to raise_error(ArgumentError)
+      end
+    end
+  end
 end

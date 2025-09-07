@@ -4,6 +4,7 @@ require "active_support/core_ext/hash/keys"
 require_relative "null_model"
 require_relative "text/result"
 require_relative "text/batch_result"
+require_relative "text/scan_result"
 
 module TopSecret
   # Processes text to identify and redact sensitive information using configured filters.
@@ -93,12 +94,46 @@ module TopSecret
       Text::BatchResult.new(mapping: global_mapping.invert, items:)
     end
 
-    # Applies configured filters to the input, redacting matches and building a mapping.
+    # Convenience method to scan input text for sensitive information without redacting it
     #
-    # @return [Result] Contains original input, redacted output, and mapping of labels to values
+    # This method detects sensitive information using configured filters but does not modify
+    # the original text. Use this when you only need to check if sensitive data exists or
+    # get a mapping of what was found.
+    #
+    # @param input [String] The text to scan for sensitive information
+    # @param filters [Hash] Optional filters to override defaults (only valid filter keys accepted)
+    # @param custom_filters [Array] Additional custom filters to apply
+    # @return [ScanResult] Contains mapping of found sensitive information and sensitive? flag
+    # @raise [ArgumentError] If invalid filter keys are provided
+    #
+    # @example Basic scanning
+    #   result = TopSecret::Text.scan("Contact john@example.com")
+    #   result.sensitive? # => true
+    #   result.mapping    # => {:EMAIL_1=>"john@example.com"}
+    #
+    # @example With custom filters
+    #   ip_filter = TopSecret::Filters::Regex.new(label: "IP", regex: /\d+\.\d+\.\d+\.\d+/)
+    #   result = TopSecret::Text.scan("Server IP: 192.168.1.1", custom_filters: [ip_filter])
+    #   result.mapping # => {:IP_1=>"192.168.1.1"}
+    #
+    # @example Overriding default filters
+    #   custom_email = TopSecret::Filters::Regex.new(label: "EMAIL_ADDR", regex: /\w+@\w+/)
+    #   result = TopSecret::Text.scan("user@test.com", email_filter: custom_email)
+    #   result.mapping # => {:EMAIL_ADDR_1=>"user@test.com"}
+    def self.scan(input, custom_filters: [], **filters)
+      new(input, filters:, custom_filters:).scan
+    end
+
+    # Scans the input text for sensitive information using configured filters
+    #
+    # This method applies all active filters to detect sensitive information but does not
+    # redact the original text. It builds a mapping of found values and returns whether
+    # any sensitive information was detected.
+    #
+    # @return [ScanResult] Contains mapping of found sensitive information and sensitive? flag
     # @raise [Error] If an unsupported filter is encountered
     # @raise [ArgumentError] If invalid filter keys are provided
-    def filter
+    def scan
       @doc ||= model.doc(@output) if model
       @entities ||= doc.entities if model
 
@@ -118,9 +153,20 @@ module TopSecret
         build_mapping(values, label: filter.label)
       end
 
-      substitute_text
+      ScanResult.new(mapping)
+    end
 
-      Text::Result.new(input, output, mapping)
+    # Applies configured filters to the input, redacting matches and building a mapping.
+    #
+    # @return [Result] Contains original input, redacted output, and mapping of labels to values
+    # @raise [Error] If an unsupported filter is encountered
+    # @raise [ArgumentError] If invalid filter keys are provided
+    def filter
+      scan_result = scan
+
+      substitute_text if scan_result.sensitive?
+
+      Text::Result.new(input, output, scan_result.mapping)
     end
 
     private
