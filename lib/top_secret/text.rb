@@ -45,7 +45,7 @@ module TopSecret
     # @param messages [Array<String>] Array of text messages to filter
     # @param custom_filters [Array] Additional custom filters to apply
     # @param filters [Hash] Optional filters to override defaults (only valid filter keys accepted)
-    # @return [BatchResult] Contains global mapping and array of input/output pairs
+    # @return [BatchResult] Contains global mapping and array of Result objects with individual mappings
     # @raise [ArgumentError] If invalid filter keys are provided
     #
     # @example Basic usage
@@ -53,6 +53,7 @@ module TopSecret
     #   result = TopSecret::Text.filter_all(messages)
     #   result.items[0].output # => "Contact [EMAIL_1]"
     #   result.items[1].output # => "Email [EMAIL_1] again"
+    #   result.items[0].mapping # => { EMAIL_1: "john@test.com" }
     #   result.mapping # => { EMAIL_1: "john@test.com" }
     #
     # @example With custom filters

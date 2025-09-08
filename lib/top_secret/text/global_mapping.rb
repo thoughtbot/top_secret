@@ -24,7 +24,7 @@ module TopSecret
       # @param individual_results [Array<Result>] Array of individual filter results
       # @return [Hash] Inverted mapping from filter labels to original values
       def build_from_results(individual_results)
-        individual_results.each { |result| process_result(result) }
+        individual_results.each { |result| process_result(result) if result.sensitive? }
 
         mapping.invert
       end

@@ -4,6 +4,8 @@ module TopSecret
   class Text
     # Holds the result of a redaction operation.
     class Result # TODO: Rename to FilterResult
+      include Mapping
+
       # @return [String] The original unredacted input
       attr_reader :input
 
@@ -34,6 +36,22 @@ module TopSecret
 
         messages.map do |message|
           TopSecret::Text.new(message, filters:, custom_filters:, model: shared_model).filter
+        end
+      end
+
+      # Creates Result objects with globally consistent labels applied to text
+      #
+      # @param individual_results [Array<Result>] Array of individual filter results
+      # @param global_mapping [Hash] Global mapping from filter labels to original values
+      # @return [Array<Result>] Array of Result objects with globally consistent redaction and individual mappings
+      def self.with_global_labels(individual_results, global_mapping)
+        individual_results.map do |result|
+          output = global_mapping.reduce(result.input.dup) do |text, (filter, value)|
+            text.gsub(value, "[#{filter}]")
+          end
+          filter_keys = output.scan(/\[([^\]]+)\]/).flatten.map(&:to_sym)
+          mapping = global_mapping.slice(*filter_keys)
+          new(result.input, output, mapping)
         end
       end
     end
