@@ -44,7 +44,7 @@ module TopSecret
     # @param messages [Array<String>] Array of text messages to filter
     # @param custom_filters [Array] Additional custom filters to apply
     # @param filters [Hash] Optional filters to override defaults (only valid filter keys accepted)
-    # @return [BatchResult] Contains global mapping and array of input/output pairs
+    # @return [BatchResult] Contains global mapping and array of Result objects with individual mappings
     # @raise [ArgumentError] If invalid filter keys are provided
     #
     # @example Basic usage
@@ -52,6 +52,7 @@ module TopSecret
     #   result = TopSecret::Text.filter_all(messages)
     #   result.items[0].output # => "Contact [EMAIL_1]"
     #   result.items[1].output # => "Email [EMAIL_1] again"
+    #   result.items[0].mapping # => { EMAIL_1: "john@test.com" }
     #   result.mapping # => { EMAIL_1: "john@test.com" }
     #
     # @example With custom filters
@@ -69,6 +70,7 @@ module TopSecret
 
       individual_results.each do |result|
         result.mapping.each do |individual_key, value|
+          next if result.safe?
           next if global_mapping.key?(value)
 
           # TODO: This assumes labels are formatted consistently.
@@ -86,12 +88,17 @@ module TopSecret
       inverted_global_mapping = global_mapping.invert
 
       items = individual_results.map do |result|
-        output = result.input.dup
-        inverted_global_mapping.each { |filter, value| output.gsub!(value, "[#{filter}]") }
-        Text::BatchResult::Item.new(result.input, output)
+        output = inverted_global_mapping.reduce(result.input.dup) do |text, (filter, value)|
+          text.gsub(value, "[#{filter}]")
+        end
+
+        filter_keys = output.scan(/\[([^\]]+)\]/).flatten.map(&:to_sym)
+        mapping = inverted_global_mapping.slice(*filter_keys)
+
+        Text::Result.new(result.input, output, mapping)
       end
 
-      Text::BatchResult.new(mapping: global_mapping.invert, items:)
+      Text::BatchResult.new(mapping: inverted_global_mapping, items:)
     end
 
     # Convenience method to scan input text for sensitive information without redacting it

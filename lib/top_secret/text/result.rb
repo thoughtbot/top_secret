@@ -4,6 +4,8 @@ module TopSecret
   class Text
     # Holds the result of a redaction operation.
     class Result # TODO: Rename to FilterResult
+      include Mapping
+
       # @return [String] The original unredacted input
       attr_reader :input
 
