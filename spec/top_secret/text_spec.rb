@@ -482,7 +482,8 @@ RSpec.describe TopSecret::Text do
       messages = [
         "My email is ralph@example.com, and my credit card number is 4242424242424242",
         "I'll email ruby@example.com, and send her my new credit card number, which is 4141414141414141",
-        "Please charge 4242424242424242 and email ruby@example.com and ralph@example.com"
+        "Please charge 4242424242424242 and email ruby@example.com and ralph@example.com",
+        "This sentence contains no sensitive information"
       ]
 
       result = TopSecret::Text.filter_all(messages)
@@ -498,7 +499,14 @@ RSpec.describe TopSecret::Text do
         expect(result.items.map(&:output)).to eq([
           "My email is [EMAIL_1], and my credit card number is [CREDIT_CARD_1]",
           "I'll email [EMAIL_2], and send her my new credit card number, which is [CREDIT_CARD_2]",
-          "Please charge [CREDIT_CARD_1] and email [EMAIL_2] and [EMAIL_1]"
+          "Please charge [CREDIT_CARD_1] and email [EMAIL_2] and [EMAIL_1]",
+          "This sentence contains no sensitive information"
+        ])
+        expect(result.items.map(&:mapping)).to eq([
+          {EMAIL_1: "ralph@example.com", CREDIT_CARD_1: "4242424242424242"},
+          {EMAIL_2: "ruby@example.com", CREDIT_CARD_2: "4141414141414141"},
+          {EMAIL_1: "ralph@example.com", EMAIL_2: "ruby@example.com", CREDIT_CARD_1: "4242424242424242"},
+          {}
         ])
       end
     end

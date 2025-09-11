@@ -4,10 +4,14 @@
 
 -   Added `TopSecret::Text.scan` method for detecting sensitive information without redacting text
 -   Added `TopSecret::Text::ScanResult` class to hold scan operation results with `mapping` and `sensitive?` methods
+-   Added `#safe?` predicate method as the logical opposite of `#sensitive?` for `BatchResult`, `Result` and `ScanResult` classes
 -   Added support for disabling NER filtering by setting `model_path` to `nil` for improved performance and deployment flexibility
 
 ### Changed
 
+-   **BREAKING:** `TopSecret::Text.filter_all` now returns `TopSecret::Text::Result` objects instead of `TopSecret::Text::BatchResult::Item` objects for individual items
+-   Each item in `BatchResult#items` now includes an individual `mapping` attribute containing only the sensitive information found in that specific message
+-   `TopSecret::Text.filter_all` now only processes sensitive results when building global mappings, improving efficiency
 -   Improved performance by implementing lazy loading of MITIE model and document processing
 -   NER filtering now gracefully falls back when MITIE model is unavailable, continuing with regex-based filters only
 
