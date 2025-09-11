@@ -4,11 +4,14 @@
 
 -   Added `TopSecret::Text.scan` method for detecting sensitive information without redacting text
 -   Added `TopSecret::Text::ScanResult` class to hold scan operation results with `mapping` and `sensitive?` methods
+-   Added `TopSecret::Text::GlobalMapping` class to manage consistent labeling across multiple filtering operations
+-   Added factory methods to domain objects: `BatchResult.from_messages`, `Result.from_messages`, and `Item.from_results`
 -   Added support for disabling NER filtering by setting `model_path` to `nil` for improved performance and deployment flexibility
 -   Added support for Rails 7.0 and newer
 
 ### Changed
 
+-   Refactored `TopSecret::Text.filter_all` to use domain objects with better separation of concerns and testability
 -   Improved performance by implementing lazy loading of MITIE model and document processing
 -   NER filtering now gracefully falls back when MITIE model is unavailable, continuing with regex-based filters only
 
