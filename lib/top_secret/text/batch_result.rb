@@ -21,6 +21,43 @@ module TopSecret
         @items = items
       end
 
+      def self.from_messages(messages, custom_filters: [], **filters)
+        shared_model = TopSecret.model_path ? Mitie::NER.new(TopSecret.model_path) : nil
+
+        individual_results = messages.map do |message|
+          TopSecret::Text.new(message, filters:, custom_filters:, model: shared_model).filter
+        end
+
+        global_mapping = {}
+        label_counters = {}
+
+        individual_results.each do |result|
+          result.mapping.each do |individual_key, value|
+            next if global_mapping.key?(value)
+
+            # TODO: This assumes labels are formatted consistently.
+            # We need to account for the following for the case where a label could begin with an "_"
+            label_type = individual_key.to_s.rpartition("_").first
+
+            label_counters[label_type] ||= 0
+            label_counters[label_type] += 1
+            global_key = :"#{label_type}_#{label_counters[label_type]}"
+
+            global_mapping[value] = global_key
+          end
+        end
+
+        inverted_global_mapping = global_mapping.invert
+
+        items = individual_results.map do |result|
+          output = result.input.dup
+          inverted_global_mapping.each { |filter, value| output.gsub!(value, "[#{filter}]") }
+          Text::BatchResult::Item.new(result.input, output)
+        end
+
+        Text::BatchResult.new(mapping: global_mapping.invert, items:)
+      end
+
       # Represents a single message within a batch redaction operation.
       # Contains only the input and output text, without individual mappings.
       # The mapping is maintained at the BatchResult level for global consistency.
