@@ -24,28 +24,12 @@ module TopSecret
       def self.from_messages(messages, custom_filters: [], **filters)
         shared_model = TopSecret.model_path ? Mitie::NER.new(TopSecret.model_path) : nil
 
+        # TopSecret::Text::Result.from_messages
         individual_results = messages.map do |message|
           TopSecret::Text.new(message, filters:, custom_filters:, model: shared_model).filter
         end
 
-        global_mapping = {}
-        label_counters = {}
-
-        individual_results.each do |result|
-          result.mapping.each do |individual_key, value|
-            next if global_mapping.key?(value)
-
-            # TODO: This assumes labels are formatted consistently.
-            # We need to account for the following for the case where a label could begin with an "_"
-            label_type = individual_key.to_s.rpartition("_").first
-
-            label_counters[label_type] ||= 0
-            label_counters[label_type] += 1
-            global_key = :"#{label_type}_#{label_counters[label_type]}"
-
-            global_mapping[value] = global_key
-          end
-        end
+        global_mapping = TopSecret::Text::GlobalMapping.from_results(individual_results)
 
         inverted_global_mapping = global_mapping.invert
 
