@@ -41,13 +41,8 @@ gem install top_secret
 >
 > Alternatively, you can disable NER filtering entirely by setting `model_path` to `nil` if you only need regex-based filters (credit cards, emails, phone numbers, SSNs). This improves performance and eliminates the model file dependency.
 
-By default, Top Secret assumes the file will live at the root of your project, but this can be configured.
-
-```ruby
-TopSecret.configure do |config|
-  config.model_path = "path/to/ner_model.dat"
-end
-```
+By default, Top Secret assumes the file will live at the root of your project.
+However, you can [override the model path](#overriding-the-model-path).
 
 ## Default Filters
 
