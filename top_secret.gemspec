@@ -31,7 +31,7 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "activesupport", TopSecret::MINIMUM_RAILS_VERSION, TopSecret::MAXIMUM_RAILS_VERSION
+  spec.add_dependency "activesupport", TopSecret::MAXIMUM_RAILS_VERSION, TopSecret::MINIMUM_RAILS_VERSION
   spec.add_dependency "mitie", "~> 0.3.2"
 
   # For more information and examples about making a new gem, check out our
