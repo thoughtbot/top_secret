@@ -23,5 +23,17 @@ module TopSecret
     def email_mapping
       mapping.select { |key, _| key.start_with? "EMAIL_" }
     end
+
+    def people
+      person_mapping.values
+    end
+
+    def people?
+      people.any?
+    end
+
+    def person_mapping
+      mapping.select { |key, _| key.start_with? "PERSON_" }
+    end
   end
 end
