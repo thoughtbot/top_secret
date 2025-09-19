@@ -43,6 +43,127 @@ RSpec.describe TopSecret::Text do
       expect(result.safe?).to eq(false)
     end
 
+    it "categorizes sensitive information from free text" do
+      input = <<~TEXT
+        My name is Ralph
+        My location is Boston
+        My email address is user@example.com
+        My credit card numbers are 4242-4242-4242-4242 and 4141414141414141
+        My social security number is 123-45-6789
+        My phone number is 555-555-5555
+      TEXT
+
+      result = TopSecret::Text.filter(input)
+
+      expect(result.emails).to eq(["user@example.com"])
+      expect(result.emails?).to eq(true)
+      expect(result.email_mapping).to eq({EMAIL_1: "user@example.com"})
+
+      expect(result.people).to eq(["Ralph"])
+      expect(result.people?).to eq(true)
+      expect(result.person_mapping).to eq({PERSON_1: "Ralph"})
+
+      expect(result.locations).to eq(["Boston"])
+      expect(result.locations?).to eq(true)
+      expect(result.location_mapping).to eq({LOCATION_1: "Boston"})
+
+      expect(result.credit_cards).to eq(["4242-4242-4242-4242", "4141414141414141"])
+      expect(result.credit_cards?).to eq(true)
+      expect(result.credit_card_mapping).to eq({
+        CREDIT_CARD_1: "4242-4242-4242-4242",
+        CREDIT_CARD_2: "4141414141414141"
+      })
+
+      expect(result.ssns).to eq(["123-45-6789"])
+      expect(result.ssns?).to eq(true)
+      expect(result.ssn_mapping).to eq({SSN_1: "123-45-6789"})
+
+      expect(result.phone_numbers).to eq(["555-555-5555"])
+      expect(result.phone_numbers?).to eq(true)
+      expect(result.phone_number_mapping).to eq({PHONE_NUMBER_1: "555-555-5555"})
+
+      expect(result.categories).to match_array(
+        [:email, :person, :location, :credit_card, :ssn, :phone_number]
+      )
+    end
+
+    context "when there is no sensitive information" do
+      before do
+        stub_ner_entities
+      end
+
+      it "categorizes sensitive information from free text" do
+        result = TopSecret::Text.filter("")
+
+        expect(result.emails).to eq([])
+        expect(result.emails?).to eq(false)
+        expect(result.email_mapping).to eq({})
+
+        expect(result.people).to eq([])
+        expect(result.people?).to eq(false)
+        expect(result.person_mapping).to eq({})
+
+        expect(result.locations).to eq([])
+        expect(result.locations?).to eq(false)
+        expect(result.location_mapping).to eq({})
+
+        expect(result.credit_cards).to eq([])
+        expect(result.credit_cards?).to eq(false)
+        expect(result.credit_card_mapping).to eq({})
+
+        expect(result.ssns).to eq([])
+        expect(result.ssns?).to eq(false)
+        expect(result.ssn_mapping).to eq({})
+
+        expect(result.phone_numbers).to eq([])
+        expect(result.phone_numbers?).to eq(false)
+        expect(result.phone_number_mapping).to eq({})
+
+        expect(result.categories).to eq([])
+      end
+    end
+
+    context "when a custom label is used" do
+      it "categorizes sensitive information from free text using that label" do
+        input = "user[at]example.com"
+
+        result = TopSecret::Text.filter(input, email_filter: TopSecret::Filters::Regex.new(
+          label: "EMAIL_ADDRESS",
+          regex: /user\[at\]example\.com/
+        ))
+
+        expect(result.email_addresses).to eq([input])
+        expect(result.email_addresses?).to eq(true)
+        expect(result.email_address_mapping).to eq({EMAIL_ADDRESS_1: input})
+      end
+
+      it "does not conflate a custom label with the default label" do
+        input = "user[at]example.com"
+
+        result = TopSecret::Text.filter(input, email_filter: TopSecret::Filters::Regex.new(
+          label: "EMAIL_ADDRESS",
+          regex: /user\[at\]example\.com/
+        ))
+
+        expect(result.emails).to eq([])
+        expect(result.emails?).to eq(false)
+        expect(result.email_mapping).to eq({})
+      end
+
+      it "returns data through default methods when the custom label matches the default" do
+        input = "user[at]example.com"
+
+        result = TopSecret::Text.filter(input, email_filter: TopSecret::Filters::Regex.new(
+          label: "EMAIL",
+          regex: /user\[at\]example\.com/
+        ))
+
+        expect(result.emails).to eq([input])
+        expect(result.emails?).to eq(true)
+        expect(result.email_mapping).to eq({EMAIL_1: input})
+      end
+    end
+
     context "when the filters option is passed" do
       it "overrides existing Regex filters" do
         input = <<~TEXT
@@ -562,6 +683,50 @@ RSpec.describe TopSecret::Text do
           false,
           true
         ])
+      end
+    end
+
+    it "categorizes sensitive information from free text" do
+      result = TopSecret::Text.filter_all([
+        "user@example.com"
+      ])
+
+      expect(result.items.map(&:emails)).to eq([["user@example.com"]])
+      expect(result.items.map(&:emails?)).to eq([true])
+      expect(result.items.map(&:email_mapping)).to eq([{EMAIL_1: "user@example.com"}])
+
+      expect(result.items.map(&:categories)).to eq([[:email]])
+    end
+
+    context "when there is no sensitive information" do
+      it "responds to the default filters" do
+        result = TopSecret::Text.filter_all([""])
+
+        expect(result.items.map(&:emails)).to all(be_empty)
+        expect(result.items.map(&:emails?)).to all(be false)
+        expect(result.items.map(&:email_mapping)).to all(be_empty)
+
+        expect(result.items.map(&:credit_cards)).to all(be_empty)
+        expect(result.items.map(&:credit_cards?)).to all(be false)
+        expect(result.items.map(&:credit_card_mapping)).to all(be_empty)
+
+        expect(result.items.map(&:phone_numbers)).to all(be_empty)
+        expect(result.items.map(&:phone_numbers?)).to all(be false)
+        expect(result.items.map(&:phone_number_mapping)).to all(be_empty)
+
+        expect(result.items.map(&:ssns)).to all(be_empty)
+        expect(result.items.map(&:ssns?)).to all(be false)
+        expect(result.items.map(&:ssn_mapping)).to all(be_empty)
+
+        expect(result.items.map(&:people)).to all(be_empty)
+        expect(result.items.map(&:people?)).to all(be false)
+        expect(result.items.map(&:person_mapping)).to all(be_empty)
+
+        expect(result.items.map(&:locations)).to all(be_empty)
+        expect(result.items.map(&:locations?)).to all(be false)
+        expect(result.items.map(&:location_mapping)).to all(be_empty)
+
+        expect(result.items.map(&:categories)).to all(be_empty)
       end
     end
 

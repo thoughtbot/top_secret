@@ -1,5 +1,13 @@
 ## [Unreleased]
 
+### Added
+
+-   Added category methods to `Result` for querying specific types of sensitive information (e.g., `emails`, `emails?`, `email_mapping`)
+-   Category methods are automatically generated for all default filter types and custom labels
+-   Category methods always return empty arrays/hashes when no data of that type is found, ensuring they're safe to call without checking
+-   Custom labels are matched exactly — `EMAIL_ADDRESS` methods are distinct from default `EMAIL` methods
+-   Added `categories` method to `Result` for listing category types that have matches in the mapping
+
 ### Changed
 
 -   **BREAKING:** Added strict label validation for custom filters. Labels must now start and end with letters and contain only alphabetic characters and single underscores (no consecutive underscores, digits, or special characters). Previously malformed labels will now raise `Error::MalformedLabel`.
