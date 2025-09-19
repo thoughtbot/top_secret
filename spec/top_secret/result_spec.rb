@@ -38,4 +38,26 @@ RSpec.describe TopSecret::Text::Result do
       end
     end
   end
+
+  describe "categorization" do
+    let(:mapping) do
+      {
+        EMAIL_1: "ralph@example.com",
+        EMAIL_2: "ruby@example.com",
+        PERSON_1: "Ralph"
+      }
+    end
+
+    it "categorizes by labels" do
+      expect(subject.emails?).to be true
+      expect(subject.emails).to eq([
+        "ralph@example.com",
+        "ruby@example.com"
+      ])
+      expect(subject.email_mapping).to eq({
+        EMAIL_1: "ralph@example.com",
+        EMAIL_2: "ruby@example.com"
+      })
+    end
+  end
 end

@@ -11,5 +11,17 @@ module TopSecret
     def safe?
       !sensitive?
     end
+
+    def emails
+      email_mapping.values
+    end
+
+    def emails?
+      emails.any?
+    end
+
+    def email_mapping
+      mapping.select { |key, _| key.start_with? "EMAIL_" }
+    end
   end
 end
