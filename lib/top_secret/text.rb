@@ -5,6 +5,7 @@ require_relative "null_model"
 require_relative "text/result"
 require_relative "text/batch_result"
 require_relative "text/scan_result"
+require_relative "text/global_mapping"
 
 module TopSecret
   # Processes text to identify and redact sensitive information using configured filters.
@@ -58,40 +59,7 @@ module TopSecret
     #   ip_filter = TopSecret::Filters::Regex.new(label: "IP", regex: /\d+\.\d+\.\d+\.\d+/)
     #   result = TopSecret::Text.filter_all(messages, custom_filters: [ip_filter])
     def self.filter_all(messages, custom_filters: [], **filters)
-      shared_model = TopSecret.model_path ? Mitie::NER.new(TopSecret.model_path) : nil
-
-      individual_results = messages.map do |message|
-        new(message, filters:, custom_filters:, model: shared_model).filter
-      end
-
-      global_mapping = {}
-      label_counters = {}
-
-      individual_results.each do |result|
-        result.mapping.each do |individual_key, value|
-          next if global_mapping.key?(value)
-
-          # TODO: This assumes labels are formatted consistently.
-          # We need to account for the following for the case where a label could begin with an "_"
-          label_type = individual_key.to_s.rpartition("_").first
-
-          label_counters[label_type] ||= 0
-          label_counters[label_type] += 1
-          global_key = :"#{label_type}_#{label_counters[label_type]}"
-
-          global_mapping[value] = global_key
-        end
-      end
-
-      inverted_global_mapping = global_mapping.invert
-
-      items = individual_results.map do |result|
-        output = result.input.dup
-        inverted_global_mapping.each { |filter, value| output.gsub!(value, "[#{filter}]") }
-        Text::BatchResult::Item.new(result.input, output)
-      end
-
-      Text::BatchResult.new(mapping: global_mapping.invert, items:)
+      Text::BatchResult.from_messages(messages, custom_filters:, **filters)
     end
 
     # Convenience method to scan input text for sensitive information without redacting it
