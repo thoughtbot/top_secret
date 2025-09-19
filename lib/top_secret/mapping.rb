@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "active_support/core_ext/string/inflections"
+
 module TopSecret
   module Mapping
     # @return [Boolean] Whether sensitive information was found
@@ -12,6 +14,18 @@ module TopSecret
       !sensitive?
     end
 
+    def method_missing(method_name)
+      if method_name == :email_mapping
+        self.class.define_method(:email_mapping) do
+          mapping.select { |key, _| key.start_with? "EMAIL_" }
+        end
+
+        send(method_name)
+      else
+        super
+      end
+    end
+
     def emails
       email_mapping.values
     end
@@ -20,9 +34,9 @@ module TopSecret
       emails.any?
     end
 
-    def email_mapping
-      mapping.select { |key, _| key.start_with? "EMAIL_" }
-    end
+    # def email_mapping
+    #   mapping.select { |key, _| key.start_with? "EMAIL_" }
+    # end
 
     def people
       person_mapping.values
