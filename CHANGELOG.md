@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [0.3.0] - 2025-09-19
+
 ### Added
 
 -   Added `TopSecret::Text.scan` method for detecting sensitive information without redacting text
