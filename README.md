@@ -173,6 +173,76 @@ result.safe?
 # => false
 ```
 
+### Category Methods
+
+Query the result for specific types of sensitive information using category methods:
+
+```ruby
+result = TopSecret::Text.filter("Ralph can be reached at ralph@example.com or 555-1234")
+
+# Check if emails were found
+result.emails?
+# => true
+
+# Get all emails
+result.emails
+# => ["ralph@example.com"]
+
+# Get email mapping
+result.email_mapping
+# => {:EMAIL_1=>"ralph@example.com"}
+
+# Similarly for other types
+result.people?         # => true
+result.people          # => ["Ralph"]
+result.person_mapping  # => {:PERSON_1=>"Ralph"}
+
+result.phone_numbers?         # => true
+result.phone_numbers          # => ["555-1234"]
+result.phone_number_mapping   # => {:PHONE_NUMBER_1=>"555-1234"}
+```
+
+Available category methods for all default filters:
+
+- `emails`, `emails?`, `email_mapping`
+- `credit_cards`, `credit_cards?`, `credit_card_mapping`
+- `phone_numbers`, `phone_numbers?`, `phone_number_mapping`
+- `ssns`, `ssns?`, `ssn_mapping`
+- `people`, `people?`, `person_mapping`
+- `locations`, `locations?`, `location_mapping`
+
+These methods are always available and return empty arrays/hashes when no sensitive information of that type is found:
+
+```ruby
+result = TopSecret::Text.filter("No sensitive data here")
+
+result.emails?         # => false
+result.emails          # => []
+result.email_mapping   # => {}
+```
+
+When using custom labels, methods are generated based on the label name. Note that default filter methods remain available and can access the same data:
+
+```ruby
+result = TopSecret::Text.filter(
+  "user[at]example.com",
+  email_filter: TopSecret::Filters::Regex.new(
+    label: "EMAIL_ADDRESS",
+    regex: /\w+\[at\]\w+\.\w+/
+  )
+)
+
+# Custom label methods (based on EMAIL_ADDRESS)
+result.email_addresses          # => ["user[at]example.com"]
+result.email_addresses?         # => true
+result.email_address_mapping    # => {:EMAIL_ADDRESS_1=>"user[at]example.com"}
+
+# Default methods still work and return the same data
+result.emails                   # => ["user[at]example.com"]
+result.emails?                  # => true
+result.email_mapping            # => {:EMAIL_ADDRESS_1=>"user[at]example.com"}
+```
+
 ### Scanning for Sensitive Information
 
 Use `TopSecret::Text.scan` to detect sensitive information without redacting the text. This is useful when you only need to check if sensitive data exists or get a mapping of what was found:
