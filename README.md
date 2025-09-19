@@ -163,6 +163,18 @@ result.mapping
 # => {:EMAIL_1=>"ralph@thoughtbot.com", :PERSON_1=>"Ralph"}
 ```
 
+Check if sensitive information was found
+
+```ruby
+result.sensitive?
+
+# => true
+
+result.safe?
+
+# => false
+```
+
 ### Scanning for Sensitive Information
 
 Use `TopSecret::Text.scan` to detect sensitive information without redacting the text. This is useful when you only need to check if sensitive data exists or get a mapping of what was found:
@@ -185,6 +197,10 @@ Check if sensitive information was found
 result.sensitive?
 
 # => true
+
+result.safe?
+
+# => false
 ```
 
 View the mapping of found sensitive information
@@ -242,9 +258,9 @@ This will return
 <TopSecret::Text::BatchResult
   @mapping={:EMAIL_1=>"ralph@thoughtbot.com", :EMAIL_2=>"ruby@thoughtbot.com"},
   @items=[
-    <TopSecret::Text::BatchResult::Item @input="Contact ralph@thoughtbot.com for details", @output="Contact [EMAIL_1] for details">,
-    <TopSecret::Text::BatchResult::Item @input="Email ralph@thoughtbot.com again if needed", @output="Email [EMAIL_1] again if needed">,
-    <TopSecret::Text::BatchResult::Item @input="Also CC ruby@thoughtbot.com on the thread", @output="Also CC [EMAIL_2] on the thread">
+    <TopSecret::Text::Result @input="Contact ralph@thoughtbot.com for details", @output="Contact [EMAIL_1] for details", @mapping={:EMAIL_1=>"ralph@thoughtbot.com"}>,
+    <TopSecret::Text::Result @input="Email ralph@thoughtbot.com again if needed", @output="Email [EMAIL_1] again if needed", @mapping={:EMAIL_1=>"ralph@thoughtbot.com"}>,
+    <TopSecret::Text::Result @input="Also CC ruby@thoughtbot.com on the thread", @output="Also CC [EMAIL_2] on the thread", @mapping={:EMAIL_2=>"ruby@thoughtbot.com"}>
   ]
 >
 ```
@@ -265,9 +281,20 @@ result.items[0].input
 
 result.items[0].output
 # => "Contact [EMAIL_1] for details"
+
+result.items[0].mapping
+# => {:EMAIL_1=>"ralph@thoughtbot.com"}
+
+result.items[0].sensitive?
+# => true
+
+result.items[0].safe?
+# => false
 ```
 
 The key benefit is that identical values receive the same labels across all messages - notice how `ralph@thoughtbot.com` becomes `[EMAIL_1]` in both the first and second messages.
+
+Each item also maintains its own mapping containing only the sensitive information found in that specific message, while the batch result provides a global mapping of all sensitive information across all messages.
 
 ### Restoring Filtered Text
 
