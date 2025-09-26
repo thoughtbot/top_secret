@@ -21,14 +21,20 @@ module TopSecret
         end
 
         send(method_name)
+      elsif method_name == :emails
+        self.class.define_method(:emails) do
+          email_mapping.values
+        end
+
+        send(method_name)
       else
         super
       end
     end
 
-    def emails
-      email_mapping.values
-    end
+    # def emails
+    #   email_mapping.values
+    # end
 
     def emails?
       emails.any?
