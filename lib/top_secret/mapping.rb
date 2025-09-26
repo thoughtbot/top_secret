@@ -27,6 +27,12 @@ module TopSecret
         end
 
         send(method_name)
+      elsif method_name == :emails?
+        self.class.define_method(:emails?) do
+          emails.any?
+        end
+
+        send(method_name)
       else
         super
       end
@@ -36,9 +42,9 @@ module TopSecret
     #   email_mapping.values
     # end
 
-    def emails?
-      emails.any?
-    end
+    # def emails?
+    #   emails.any?
+    # end
 
     # def email_mapping
     #   mapping.select { |key, _| key.start_with? "EMAIL_" }
