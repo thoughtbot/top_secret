@@ -46,31 +46,33 @@ module TopSecret
     end
 
     def types
-      @types ||= mapping.keys.uniq.map do |key|
+      @types ||= mapping.keys.map do |key|
         key.to_s.split("_").first.downcase
       end.uniq.map(&:to_sym)
     end
 
     private
 
+    def stringified_types
+      types.map(&:to_s)
+    end
+
     def pluralized_methods
-      @pluralized_methods ||= types.map(&:to_s).map(&:pluralize).map(&:to_sym)
+      @pluralized_methods ||= stringified_types.map(&:pluralize).map(&:to_sym)
     end
 
     def predicate_methods
-      @predicate_methods ||= pluralized_methods.map do |plural_type|
-        (plural_type.to_s + "?").to_sym
-      end
+      @predicate_methods ||= pluralized_methods.map { :"#{_1}?" }
     end
 
     def mapping_methods
-      @mapping_methods ||= types.uniq.map do |type|
-        (type.to_s + "_mapping").to_sym
-      end
+      @mapping_methods ||= stringified_types.map { :"#{_1}_mapping" }
     end
 
     def build_mapping_method_from(method_name)
-      mapping.select { |key, _| key.start_with? method_name.to_s.split("mapping").first.upcase }
+      type = method_name.to_s.split("mapping").first.upcase
+
+      mapping.select { |key, _| key.start_with? type }
     end
 
     def build_plural_method_from(method_name)
