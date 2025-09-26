@@ -23,13 +23,15 @@ module TopSecret
         (type + "_mapping").to_sym
       end
 
+      plural_types = types.uniq.map(&:pluralize).map(&:to_sym)
+
       if mapping_methods.select { _1 == method_name }.first == :email_mapping
         self.class.define_method(:email_mapping) do
           mapping.select { |key, _| key.start_with? method_name.to_s.split("mapping").first.upcase }
         end
 
         send(method_name)
-      elsif method_name == :emails
+      elsif plural_types.select { _1 == method_name }.first == :emails
         self.class.define_method(:emails) do
           email_mapping.values
         end
