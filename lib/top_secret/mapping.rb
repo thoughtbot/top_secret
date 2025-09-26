@@ -29,19 +29,19 @@ module TopSecret
         (plural_type.to_s + "?").to_sym
       end
 
-      if mapping_methods.select { _1 == method_name }.first == :email_mapping
+      if mapping_methods.select { _1 == method_name }.first
         self.class.define_method(:email_mapping) do
           mapping.select { |key, _| key.start_with? method_name.to_s.split("mapping").first.upcase }
         end
 
         send(method_name)
-      elsif plural_types.select { _1 == method_name }.first == :emails
+      elsif plural_types.select { _1 == method_name }.first
         self.class.define_method(:emails) do
           email_mapping.values
         end
 
         send(method_name)
-      elsif predicate_types.select { _1 == method_name }.first == :emails?
+      elsif predicate_types.select { _1 == method_name }.first
         self.class.define_method(:emails?) do
           emails.any?
         end
@@ -51,18 +51,6 @@ module TopSecret
         super
       end
     end
-
-    # def emails
-    #   email_mapping.values
-    # end
-
-    # def emails?
-    #   emails.any?
-    # end
-
-    # def email_mapping
-    #   mapping.select { |key, _| key.start_with? "EMAIL_" }
-    # end
 
     def people
       person_mapping.values
