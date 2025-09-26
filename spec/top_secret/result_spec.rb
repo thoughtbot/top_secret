@@ -42,7 +42,7 @@ RSpec.describe TopSecret::Text::Result do
   describe "categorization" do
     let(:mapping) do
       {
-        EMAIL_1: "ralph@example.com",
+        _EMAIL_1: "ralph@example.com",
         EMAIL_2: "ruby@example.com",
         PERSON_1: "Ralph"
       }

@@ -47,7 +47,7 @@ module TopSecret
 
     def types
       @types ||= mapping.keys.map do |key|
-        key.to_s.split("_").first.downcase
+        key.to_s.split("_").reject(&:empty?).first.downcase
       end.uniq.map(&:to_sym)
     end
 
