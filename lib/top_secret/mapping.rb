@@ -25,6 +25,10 @@ module TopSecret
 
       plural_types = types.uniq.map(&:pluralize).map(&:to_sym)
 
+      predicate_types = plural_types.map do |plural_type|
+        (plural_type.to_s + "?").to_sym
+      end
+
       if mapping_methods.select { _1 == method_name }.first == :email_mapping
         self.class.define_method(:email_mapping) do
           mapping.select { |key, _| key.start_with? method_name.to_s.split("mapping").first.upcase }
@@ -37,7 +41,7 @@ module TopSecret
         end
 
         send(method_name)
-      elsif method_name == :emails?
+      elsif predicate_types.select { _1 == method_name }.first == :emails?
         self.class.define_method(:emails?) do
           emails.any?
         end
