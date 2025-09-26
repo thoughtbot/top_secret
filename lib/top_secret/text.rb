@@ -211,6 +211,8 @@ module TopSecret
     end
 
     def validate_label!(label)
+      # see if converting it to underscore matches the label
+      # if not, rails
       raise Error::MalformedLabel, "You must provide a label." if label.blank?
 
       if !label[0].match?(/[a-zA-Z]/) || !label[-1].match?(/[a-zA-Z]/)
