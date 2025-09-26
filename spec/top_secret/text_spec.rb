@@ -473,6 +473,46 @@ RSpec.describe TopSecret::Text do
         expect(result.output).to eq("Boston")
       end
     end
+
+    context "when a malformed label is passed" do
+      %w[
+        _EMAIL_ADDRESS
+        EMAIL_ADDRESS_
+        1EMAIL_ADDRESS
+        EMAIL_ADDRESS1
+        1_EMAIL_ADDRESS
+        EMAIL_ADDRESS_1
+        *EMAIL_ADDRESS
+        EMAIL_ADDRESS*
+        EMAIL__ADDRESS
+        EMAIL*ADDRESS
+        EMAIL1ADDRESS
+      ].each do |invalid_label|
+        it "raises when label is '#{invalid_label}'" do
+          expect {
+            TopSecret::Text.filter("", email_filter: TopSecret::Filters::Regex.new(
+              label: invalid_label,
+              regex: /user\[at\]example\.com/
+            ))
+          }.to raise_error(TopSecret::Error::MalformedLabel, "Unsupported label. Labels must contain only letters and underscores: '#{invalid_label}'")
+        end
+      end
+
+      [
+        "",
+        " ",
+        nil
+      ].each do |blank_label|
+        it "raises raises when label is '#{blank_label}'" do
+          expect {
+            TopSecret::Text.filter("", email_filter: TopSecret::Filters::Regex.new(
+              label: blank_label,
+              regex: /user\[at\]example\.com/
+            ))
+          }.to raise_error(TopSecret::Error::MalformedLabel, "You must provide a label.")
+        end
+      end
+    end
   end
 
   describe ".filter_all" do

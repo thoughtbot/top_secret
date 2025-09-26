@@ -453,6 +453,20 @@ TopSecret::Text.filter("some text", invalid_filter: some_filter)
 
 ### Custom Filters
 
+> [!IMPORTANT]
+> Custom filter labels must follow these rules:
+>
+> -   Start with a letter (a-z, A-Z)
+> -   End with a letter (a-z, A-Z)
+> -   Contain only letters and single underscores (no consecutive underscores)
+> -   Cannot contain digits or special characters
+>
+> Valid examples: `EMAIL`, `IP_ADDRESS`, `CREDIT_CARD`
+>
+> Invalid examples: `_EMAIL` (starts with underscore), `EMAIL_` (ends with underscore), `EMAIL1` (ends with digit), `EMAIL__ADDRESS` (consecutive underscores)
+>
+> The system automatically appends `_N` where N is the sequence number (e.g., `EMAIL_ADDRESS` becomes `EMAIL_ADDRESS_1`, `EMAIL_ADDRESS_2`, etc.)
+
 #### Adding new [Regex filters][]
 
 ```ruby
