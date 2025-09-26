@@ -170,6 +170,8 @@ module TopSecret
     # @param label [String] Label identifying the filter type
     # @return [void]
     def build_mapping(values, label:)
+      validate_label! label
+
       values.uniq.each.with_index(1) do |value, index|
         filter = "#{label}_#{index}"
         mapping.merge!({filter.to_sym => value})
@@ -206,6 +208,10 @@ module TopSecret
     # @raise [ArgumentError] If invalid filter keys are provided
     def validate_filters!
       merged_filters.assert_valid_keys(*default_filters.keys)
+    end
+
+    def validate_label!(label)
+      raise Error::MalformedLabel
     end
 
     # Returns the default filters configuration hash
