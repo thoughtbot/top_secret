@@ -15,9 +15,17 @@ module TopSecret
     end
 
     def method_missing(method_name)
-      if method_name == :email_mapping
+      types = mapping.keys.map do |key|
+        key.to_s.split("_").first.downcase
+      end
+
+      mapping_methods = types.uniq.map do |type|
+        (type + "_mapping").to_sym
+      end
+
+      if mapping_methods.select { _1 == method_name }.first == :email_mapping
         self.class.define_method(:email_mapping) do
-          mapping.select { |key, _| key.start_with? "EMAIL_" }
+          mapping.select { |key, _| key.start_with? method_name.to_s.split("mapping").first.upcase }
         end
 
         send(method_name)
