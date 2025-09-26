@@ -15,20 +15,20 @@ module TopSecret
     end
 
     def method_missing(method_name)
-      if mapping_methods.select { _1 == method_name }.first
+      if mapping_methods.include? method_name
         self.class.define_method(method_name) do
           mapping.select { |key, _| key.start_with? method_name.to_s.split("mapping").first.upcase }
         end
 
         send(method_name)
-      elsif pluralized_methods.select { _1 == method_name }.first
+      elsif pluralized_methods.include? method_name
         mapping_method = (method_name.to_s.singularize + "_mapping").to_sym
         self.class.define_method(method_name) do
           send(mapping_method).values
         end
 
         send(method_name)
-      elsif predicate_methods.select { _1 == method_name }.first
+      elsif predicate_methods.include? method_name
         plural_method = method_name.to_s.chomp("?").to_sym
         self.class.define_method(method_name) do
           send(plural_method).any?
