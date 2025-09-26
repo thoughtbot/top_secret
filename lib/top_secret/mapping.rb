@@ -29,7 +29,7 @@ module TopSecret
         send(method_name)
       elsif predicate_methods.include? method_name
         self.class.define_method(method_name) do
-          build_predicate_methof_from method_name
+          build_predicate_method_from method_name
         end
 
         send(method_name)
@@ -45,16 +45,16 @@ module TopSecret
         super
     end
 
-    private
-
     def types
-      @types ||= mapping.keys.map do |key|
+      @types ||= mapping.keys.uniq.map do |key|
         key.to_s.split("_").first.downcase
-      end
+      end.uniq.map(&:to_sym)
     end
 
+    private
+
     def pluralized_methods
-      @pluralized_methods ||= types.uniq.map(&:pluralize).map(&:to_sym)
+      @pluralized_methods ||= types.map(&:to_s).map(&:pluralize).map(&:to_sym)
     end
 
     def predicate_methods
@@ -65,7 +65,7 @@ module TopSecret
 
     def mapping_methods
       @mapping_methods ||= types.uniq.map do |type|
-        (type + "_mapping").to_sym
+        (type.to_s + "_mapping").to_sym
       end
     end
 
@@ -79,7 +79,7 @@ module TopSecret
       send(mapping_method).values
     end
 
-    def build_predicate_methof_from(method_name)
+    def build_predicate_method_from(method_name)
       plural_method = method_name.to_s.chomp("?").to_sym
 
       send(plural_method).any?

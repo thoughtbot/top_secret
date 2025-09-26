@@ -69,6 +69,13 @@ RSpec.describe TopSecret::Text::Result do
       })
     end
 
+    it "extracts types" do
+      expect(subject.types).to eq([
+        :email,
+        :person
+      ])
+    end
+
     it "responds to dynamic methods" do
       expect(subject).to respond_to(:emails)
       expect(subject).to respond_to(:emails?)
