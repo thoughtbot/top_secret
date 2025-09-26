@@ -473,6 +473,25 @@ RSpec.describe TopSecret::Text do
         expect(result.output).to eq("Boston")
       end
     end
+
+    context "when a malformed label is passed" do
+      invalid_labels = %w[
+        _EMAIL_ADDRESS
+        _EMAIL_ADDRESS_
+        EMAIL__ADDRESS
+      ]
+
+      invalid_labels.each do |invalid_label|
+        it "raises raises when label is #{invalid_label}" do
+          expect {
+            TopSecret::Text.filter(input, email_filter: TopSecret::Filters::Regex.new(
+              label: invalid_label,
+              regex: /user\[at\]example\.com/
+            ))
+          }.to raise_error(TopSecret::Error::MalformedLabel)
+        end
+      end
+    end
   end
 
   describe ".filter_all" do
