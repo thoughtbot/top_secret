@@ -29,20 +29,20 @@ module TopSecret
         (plural_type.to_s + "?").to_sym
       end
 
-      if mapping_methods.select { _1 == method_name }.first
-        self.class.define_method(:email_mapping) do
+      if (foo = mapping_methods.select { _1 == method_name }.first)
+        self.class.define_method(foo) do
           mapping.select { |key, _| key.start_with? method_name.to_s.split("mapping").first.upcase }
         end
 
         send(method_name)
-      elsif plural_types.select { _1 == method_name }.first
-        self.class.define_method(:emails) do
+      elsif (foo = plural_types.select { _1 == method_name }.first)
+        self.class.define_method(foo) do
           email_mapping.values
         end
 
         send(method_name)
-      elsif predicate_types.select { _1 == method_name }.first
-        self.class.define_method(:emails?) do
+      elsif (foo = predicate_types.select { _1 == method_name }.first)
+        self.class.define_method(foo) do
           emails.any?
         end
 
