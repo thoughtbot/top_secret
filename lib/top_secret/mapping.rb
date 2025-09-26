@@ -17,21 +17,19 @@ module TopSecret
     def method_missing(method_name)
       if mapping_methods.include? method_name
         self.class.define_method(method_name) do
-          mapping.select { |key, _| key.start_with? method_name.to_s.split("mapping").first.upcase }
+          build_mapping_method_from method_name
         end
 
         send(method_name)
       elsif pluralized_methods.include? method_name
-        mapping_method = (method_name.to_s.singularize + "_mapping").to_sym
         self.class.define_method(method_name) do
-          send(mapping_method).values
+          build_plural_method_from method_name
         end
 
         send(method_name)
       elsif predicate_methods.include? method_name
-        plural_method = method_name.to_s.chomp("?").to_sym
         self.class.define_method(method_name) do
-          send(plural_method).any?
+          build_predicate_methof_from method_name
         end
 
         send(method_name)
@@ -69,6 +67,22 @@ module TopSecret
       @mapping_methods ||= types.uniq.map do |type|
         (type + "_mapping").to_sym
       end
+    end
+
+    def build_mapping_method_from(method_name)
+      mapping.select { |key, _| key.start_with? method_name.to_s.split("mapping").first.upcase }
+    end
+
+    def build_plural_method_from(method_name)
+      mapping_method = (method_name.to_s.singularize + "_mapping").to_sym
+
+      send(mapping_method).values
+    end
+
+    def build_predicate_methof_from(method_name)
+      plural_method = method_name.to_s.chomp("?").to_sym
+
+      send(plural_method).any?
     end
   end
 end
