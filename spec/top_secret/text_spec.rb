@@ -478,6 +478,10 @@ RSpec.describe TopSecret::Text do
       invalid_labels = %w[
         _EMAIL_ADDRESS
         EMAIL_ADDRESS_
+        1EMAIL_ADDRESS
+        EMAIL_ADDRESS1
+        *EMAIL_ADDRESS
+        EMAIL_ADDRESS*
       ]
 
       invalid_labels.each do |invalid_label|
@@ -487,7 +491,7 @@ RSpec.describe TopSecret::Text do
               label: invalid_label,
               regex: /user\[at\]example\.com/
             ))
-          }.to raise_error(TopSecret::Error::MalformedLabel)
+          }.to raise_error(TopSecret::Error::MalformedLabel, "Unsupported label. Labels must start and end with letters: #{invalid_label}")
         end
       end
     end

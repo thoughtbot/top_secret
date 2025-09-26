@@ -211,8 +211,8 @@ module TopSecret
     end
 
     def validate_label!(label)
-      if label.start_with?("_") || label.end_with?("_")
-        raise Error::MalformedLabel
+      if !label[0].match?(/[a-zA-Z]/) || !label[-1].match?(/[a-zA-Z]/)
+        raise Error::MalformedLabel, "Unsupported label. Labels must start and end with letters: #{label}"
       end
     end
 
