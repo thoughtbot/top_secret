@@ -68,5 +68,14 @@ RSpec.describe TopSecret::Text::Result do
         PERSON_1: "Ralph"
       })
     end
+
+    it "responds to dynamic methods" do
+      expect(subject).to respond_to(:emails)
+      expect(subject).to respond_to(:emails?)
+      expect(subject).to respond_to(:email_mapping)
+      expect(subject).to respond_to(:people)
+      expect(subject).to respond_to(:people?)
+      expect(subject).to respond_to(:person_mapping)
+    end
   end
 end

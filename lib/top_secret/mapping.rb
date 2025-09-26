@@ -40,6 +40,13 @@ module TopSecret
       end
     end
 
+    def respond_to_missing?(method_name, include_private = false)
+      mapping_methods.include?(method_name) ||
+        pluralized_methods.include?(method_name) ||
+        predicate_methods.include?(method_name) ||
+        super
+    end
+
     private
 
     def types
