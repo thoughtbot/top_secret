@@ -475,23 +475,36 @@ RSpec.describe TopSecret::Text do
     end
 
     context "when a malformed label is passed" do
-      invalid_labels = %w[
+      %w[
         _EMAIL_ADDRESS
         EMAIL_ADDRESS_
         1EMAIL_ADDRESS
         EMAIL_ADDRESS1
         *EMAIL_ADDRESS
         EMAIL_ADDRESS*
-      ]
-
-      invalid_labels.each do |invalid_label|
-        it "raises raises when label is #{invalid_label}" do
+      ].each do |invalid_label|
+        it "raises raises when label is '#{invalid_label}'" do
           expect {
             TopSecret::Text.filter("", email_filter: TopSecret::Filters::Regex.new(
               label: invalid_label,
               regex: /user\[at\]example\.com/
             ))
-          }.to raise_error(TopSecret::Error::MalformedLabel, "Unsupported label. Labels must start and end with letters: #{invalid_label}")
+          }.to raise_error(TopSecret::Error::MalformedLabel, "Unsupported label. Labels must start and end with letters: '#{invalid_label}'")
+        end
+      end
+
+      [
+        "",
+        " ",
+        nil
+      ].each do |blank_label|
+        it "raises raises when label is '#{blank_label}'" do
+          expect {
+            TopSecret::Text.filter("", email_filter: TopSecret::Filters::Regex.new(
+              label: blank_label,
+              regex: /user\[at\]example\.com/
+            ))
+          }.to raise_error(TopSecret::Error::MalformedLabel, "You must provide a label.")
         end
       end
     end

@@ -211,8 +211,10 @@ module TopSecret
     end
 
     def validate_label!(label)
+      raise Error::MalformedLabel, "You must provide a label." if label.blank?
+
       if !label[0].match?(/[a-zA-Z]/) || !label[-1].match?(/[a-zA-Z]/)
-        raise Error::MalformedLabel, "Unsupported label. Labels must start and end with letters: #{label}"
+        raise Error::MalformedLabel, "Unsupported label. Labels must start and end with letters: '#{label}'"
       end
     end
 
