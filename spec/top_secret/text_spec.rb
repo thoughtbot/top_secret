@@ -475,10 +475,9 @@ RSpec.describe TopSecret::Text do
     end
 
     context "when a malformed label is passed" do
-      # _EMAIL_ADDRESS_
-      # EMAIL__ADDRESS
       invalid_labels = %w[
         _EMAIL_ADDRESS
+        EMAIL_ADDRESS_
       ]
 
       invalid_labels.each do |invalid_label|

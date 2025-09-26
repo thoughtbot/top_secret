@@ -211,7 +211,9 @@ module TopSecret
     end
 
     def validate_label!(label)
-      raise Error::MalformedLabel
+      if label.start_with?("_") || label.end_with?("_")
+        raise Error::MalformedLabel
+      end
     end
 
     # Returns the default filters configuration hash
