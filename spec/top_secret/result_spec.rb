@@ -42,9 +42,10 @@ RSpec.describe TopSecret::Text::Result do
   describe "categorization" do
     let(:mapping) do
       {
-        _EMAIL_1: "ralph@example.com",
+        EMAIL_1: "ralph@example.com",
         EMAIL_2: "ruby@example.com",
-        PERSON_1: "Ralph"
+        PERSON_1: "Ralph",
+        IP_ADDRESS_1: "192.168.1.1"
       }
     end
 
@@ -72,7 +73,8 @@ RSpec.describe TopSecret::Text::Result do
     it "extracts types" do
       expect(subject.types).to eq([
         :email,
-        :person
+        :person,
+        :ip_addresses
       ])
     end
 
