@@ -18,7 +18,7 @@ module TopSecret
   }x
 
   # @return [Regexp] Matches phone numbers with optional country code
-  PHONE_REGEX = /\b(?:\+\d{1,2}\s)?\(?\d{3}\)?[\s+.-]\d{3}[\s+.-]\d{4}\b/
+  PHONE_REGEX = /(?<!\w)(?:\+\d{1,2}\s)?(?:\(\d{3}\)|\d{3})[\s.\-]\d{3}[\s.\-]\d{4}(?!\w)/
 
   # @return [Regexp] Matches Social Security Numbers in common formats
   SSN_REGEX = /\b\d{3}[\s+-]\d{2}[\s+-]\d{4}\b/
