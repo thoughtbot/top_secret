@@ -15,14 +15,14 @@ RSpec.describe "TopSecret::PHONE_REGEX" do
         expect(phone_number).to match(TopSecret::PHONE_REGEX)
       end
     end
-  end
 
-  it "matches embedded parenthesized number and preserves mapping" do
-    input  = "My phone number is (555) 555-5555"
-    output = input.gsub(TopSecret::PHONE_REGEX) { "[PHONE_NUMBER_1]" }
-    md     = input.match(TopSecret::PHONE_REGEX)
+    it "matches embedded parenthesized number and preserves mapping" do
+      input  = "My phone number is (555) 555-5555"
+      output = input.gsub(TopSecret::PHONE_REGEX) { "[PHONE_NUMBER_1]" }
+      md     = input.match(TopSecret::PHONE_REGEX)
 
-    expect(output).to eq("My phone number is [PHONE_NUMBER_1]")
-    expect(md[0]).to eq("(555) 555-5555")
+      expect(output).to eq("My phone number is [PHONE_NUMBER_1]")
+      expect(md[0]).to eq("(555) 555-5555")
+    end
   end
 end
