@@ -3,6 +3,8 @@
 RSpec.describe "TopSecret::PHONE_REGEX" do
   phone_numbers = [
     "+1 415-555-1234",
+    "+1 (415) 555-1234",
+    "1 (415) 555-1234",
     "(415) 555-1234",
     "415.555.1234",
     "415 555 1234",
@@ -20,7 +22,8 @@ RSpec.describe "TopSecret::PHONE_REGEX" do
     "(555 555-5555",
     "415+555+1234",
     "(555 ) 555-5555",
-    ")555( 555-5555"
+    ")555( 555-5555",
+    "(415)  555-1234",
   ]
 
   bad_phone_numbers.each do |phone_number|
