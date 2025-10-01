@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+### Added
+
+-   Added `TopSecret.shared_model` configuration option for caching the MITIE model instance to avoid expensive reinitialization
+
 ## [0.3.0] - 2025-09-19
 
 ### Added

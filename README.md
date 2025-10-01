@@ -568,6 +568,27 @@ TopSecret.configure do |config|
 end
 ```
 
+### Caching the MITIE model
+
+By default, each `TopSecret::Text` instance creates a new MITIE model, which can be slow. To improve performance, you can cache a single shared model instance:
+
+```ruby
+TopSecret.configure do |config|
+  config.shared_model = Mitie::NER.new(config.model_path)
+end
+```
+
+This is particularly useful in Rails applications. Add this to an initializer to load the model once at boot:
+
+```ruby
+# config/initializers/top_secret.rb
+Rails.application.config.after_initialize do
+  TopSecret.shared_model = Mitie::NER.new(config.model_path) if config.model_path
+end
+```
+
+All `TopSecret::Text` instances will reuse this cached model, significantly improving performance.
+
 ### Disabling NER filtering
 
 For improved performance or when the MITIE model file cannot be deployed, you can disable NER-based filtering entirely. This will disable people and location detection but retain all regex-based filters (credit cards, emails, phone numbers, SSNs):

@@ -48,6 +48,7 @@ module TopSecret
 
   config_accessor :model_path, default: MODEL_PATH
   config_accessor :min_confidence_score, default: MIN_CONFIDENCE_SCORE
+  config_accessor :shared_model
 
   config_accessor :custom_filters, default: []
 

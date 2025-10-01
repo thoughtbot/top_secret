@@ -225,9 +225,12 @@ module TopSecret
 
     # Creates the default model based on configuration.
     # Returns a MITIE NER model if a model path is configured, otherwise returns a null model.
+    # If a shared_model is configured, it will be used instead of creating a new instance.
     #
     # @return [Mitie::NER, NullModel] The model instance to use for NER processing
     def default_model
+      return TopSecret.shared_model if TopSecret.shared_model
+
       if TopSecret.model_path
         Mitie::NER.new(TopSecret.model_path)
       else
