@@ -8,7 +8,8 @@ RSpec.describe TopSecret do
       "415.555.1234",
       "415 555 1234",
       "415-555-1234",
-      "4155551234"
+      "4155551234",
+      "(555)4155551234"
     ]
 
     phone_numbers.each do |phone_number|
