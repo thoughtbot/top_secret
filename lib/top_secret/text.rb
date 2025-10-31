@@ -10,6 +10,36 @@ require_relative "text/global_mapping"
 module TopSecret
   # Processes text to identify and redact sensitive information using configured filters.
   class Text
+    @mutex = Mutex.new
+
+    class << self
+      # Returns a cached MITIE model instance to avoid expensive reinitialization
+      #
+      # @return [Mitie::NER, NullModel] The cached model instance
+      def shared_model
+        return @shared_model if @shared_model
+
+        @mutex.synchronize do
+          return @shared_model if @shared_model
+
+          @shared_model = if TopSecret.model_path
+            Mitie::NER.new(TopSecret.model_path)
+          else
+            NullModel.new
+          end
+        end
+      end
+
+      # Clears the cached model, forcing reinitialization on next access
+      #
+      # @return [void]
+      def clear_model_cache!
+        @mutex.synchronize do
+          @shared_model = nil
+        end
+      end
+    end
+
     # @param input [String] The original text to be filtered
     # @param filters [Hash, nil] Optional set of filters to override the defaults
     # @param custom_filters [Array] Additional custom filters to apply
@@ -224,15 +254,11 @@ module TopSecret
     end
 
     # Creates the default model based on configuration.
-    # Returns a MITIE NER model if a model path is configured, otherwise returns a null model.
+    # Returns the cached shared model to avoid expensive reinitialization.
     #
     # @return [Mitie::NER, NullModel] The model instance to use for NER processing
     def default_model
-      if TopSecret.model_path
-        Mitie::NER.new(TopSecret.model_path)
-      else
-        NullModel.new
-      end
+      Text.shared_model
     end
   end
 end

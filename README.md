@@ -568,6 +568,16 @@ TopSecret.configure do |config|
 end
 ```
 
+### Model caching
+
+The MITIE NER model is automatically cached after the first initialization to avoid expensive reloading. All `TopSecret::Text` instances share the same cached model, significantly improving performance.
+
+If you need to clear the cache (e.g., after changing the model path), use:
+
+```ruby
+TopSecret::Text.clear_model_cache!
+```
+
 ### Disabling NER filtering
 
 For improved performance or when the MITIE model file cannot be deployed, you can disable NER-based filtering entirely. This will disable people and location detection but retain all regex-based filters (credit cards, emails, phone numbers, SSNs):
