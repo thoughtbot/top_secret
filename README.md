@@ -35,9 +35,7 @@ gem install top_secret
 > You'll need to download and extract [ner_model.dat][] first.
 
 > [!TIP]
-> Due to its large size, you'll likely want to avoid committing [ner_model.dat][] into version control.
->
-> You'll need to ensure the file exists in deployed environments. See relevant [discussion][discussions_60] for details.
+> Due to its large size, you'll likely want to avoid committing [ner_model.dat][] into version control. See the [Production](#production) section for details on using [Trove][] to deploy the model file.
 >
 > Alternatively, you can disable NER filtering entirely by setting `model_path` to `nil` if you only need regex-based filters (credit cards, emails, phone numbers, SSNs). This improves performance and eliminates the model file dependency.
 
@@ -633,6 +631,39 @@ TopSecret.configure do |config|
   config.custom_filters << ip_address_filter
 end
 ```
+
+## Production
+
+### Deploying the Model File
+
+Due to the large size of `ner_model.dat`, you'll want to avoid committing it to version control. Use [Trove][] to handle deploying the model file in production:
+
+```ruby
+# Rakefile
+Rake::Task["assets:precompile"].enhance do
+  Trove.pull
+end
+```
+
+This ensures the model file is downloaded during deployment.
+
+### Eager-Loading the Model
+
+To avoid cold-start performance issues, consider eager-loading the model after initialization. This must happen after initialization because the `.dat` file needs to exist first:
+
+```ruby
+# config/application.rb
+
+config.after_initialize do
+  if TopSecret.model_path && File.exist?(TopSecret.model_path)
+    TopSecret::Text.shared_model
+  end
+end
+```
+
+This pre-loads the MITIE model into the shared cache, ensuring the first request doesn't incur the model loading overhead.
+
+[Trove]: https://github.com/ankane/trove
 
 ## Development
 
