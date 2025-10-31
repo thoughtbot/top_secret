@@ -1,5 +1,10 @@
 ## [Unreleased]
 
+### Added
+
+-   Added automatic caching of MITIE NER model to improve performance by avoiding expensive reinitialization
+-   Added `TopSecret::Text.clear_model_cache!` method to clear the cached model when needed
+
 ## [0.3.0] - 2025-09-19
 
 ### Added

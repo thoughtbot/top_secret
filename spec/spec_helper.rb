@@ -12,6 +12,11 @@ RSpec.configure do |config|
   config.expect_with :rspec do |c|
     c.syntax = :expect
   end
+
+  # Clear the cached model before each test to ensure test isolation
+  config.before(:each) do
+    TopSecret::Text.clear_model_cache!
+  end
 end
 
 def build_entity(text:, tag:, score: TopSecret.min_confidence_score)
