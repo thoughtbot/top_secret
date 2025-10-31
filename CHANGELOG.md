@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [0.4.0] - 2025-10-31
+
 ### Added
 
 -   Added automatic caching of MITIE NER model to improve performance by avoiding expensive reinitialization
