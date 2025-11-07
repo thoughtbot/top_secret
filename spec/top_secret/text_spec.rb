@@ -135,7 +135,7 @@ RSpec.describe TopSecret::Text do
         input = "user[at]example.com"
 
         result = TopSecret::Text.filter(input, email_filter: TopSecret::Filters::Regex.new(
-          label: "EMAIL_ADDRESS",
+          label: "E_MAIL_ADDRESS",
           regex: /user\[at\]example\.com/
         ))
 
