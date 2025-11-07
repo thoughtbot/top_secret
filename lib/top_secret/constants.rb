@@ -25,4 +25,7 @@ module TopSecret
 
   # @return [Float] The minimum confidence score for NER filtering
   MIN_CONFIDENCE_SCORE = 0.5
+
+  # @return [String] The delimiter used in label names
+  LABEL_DELIMITER = "_"
 end
