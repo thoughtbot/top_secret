@@ -200,6 +200,8 @@ module TopSecret
     # @param label [String] Label identifying the filter type
     # @return [void]
     def build_mapping(values, label:)
+      validate_label! label
+
       values.uniq.each.with_index(1) do |value, index|
         filter = "#{label}_#{index}"
         mapping.merge!({filter.to_sym => value})
@@ -236,6 +238,40 @@ module TopSecret
     # @raise [ArgumentError] If invalid filter keys are provided
     def validate_filters!
       merged_filters.assert_valid_keys(*default_filters.keys)
+    end
+
+    # Validates that a label conforms to the required format for redaction placeholders.
+    #
+    # Labels must meet the following criteria:
+    # - Start with a letter (a-z, A-Z)
+    # - End with a letter (a-z, A-Z)
+    # - Contain only letters and single underscores (no consecutive underscores)
+    # - Not be blank or nil
+    #
+    # Valid labels will have `_N` appended automatically during mapping, where N is the sequence number.
+    #
+    # @param label [String] The label to validate
+    # @return [void]
+    # @raise [Error::MalformedLabel] If the label is blank or doesn't meet format requirements
+    #
+    # @example Valid labels
+    #   validate_label!("EMAIL")           # Valid
+    #   validate_label!("IP_ADDRESS")      # Valid
+    #   validate_label!("CREDIT_CARD")     # Valid
+    #
+    # @example Invalid labels
+    #   validate_label!("_EMAIL")          # Invalid - starts with underscore
+    #   validate_label!("EMAIL_")          # Invalid - ends with underscore
+    #   validate_label!("EMAIL1")          # Invalid - ends with digit
+    #   validate_label!("EMAIL__ADDRESS")  # Invalid - consecutive underscores
+    #   validate_label!("EMAIL*ADDRESS")   # Invalid - special characters
+    #   validate_label!("")                # Invalid - blank
+    def validate_label!(label)
+      raise Error::MalformedLabel, "You must provide a label." if label.blank?
+
+      unless label.match?(/\A[a-zA-Z]+(_[a-zA-Z]+)*\z/)
+        raise Error::MalformedLabel, "Unsupported label. Labels must contain only letters and underscores: '#{label}'"
+      end
     end
 
     # Returns the default filters configuration hash

@@ -1,5 +1,27 @@
 ## [Unreleased]
 
+### Changed
+
+-   **BREAKING:** Added strict label validation for custom filters. Labels must now start and end with letters and contain only alphabetic characters and single underscores (no consecutive underscores, digits, or special characters). Previously malformed labels will now raise `Error::MalformedLabel`.
+
+### Migration Guide
+
+If you have custom filters with malformed labels, update them to meet the new requirements:
+
+```ruby
+# Before (invalid)
+TopSecret::Filters::Regex.new(label: "EMAIL_ADDRESS_1", regex: /.../)
+TopSecret::Filters::Regex.new(label: "_EMAIL", regex: /.../)
+TopSecret::Filters::Regex.new(label: "EMAIL1", regex: /.../)
+
+# After (valid)
+TopSecret::Filters::Regex.new(label: "EMAIL_ADDRESS", regex: /.../)
+TopSecret::Filters::Regex.new(label: "EMAIL", regex: /.../)
+TopSecret::Filters::Regex.new(label: "EMAIL", regex: /.../)
+```
+
+Note: The `_N` suffix is appended automatically by the system during mapping.
+
 ## [0.4.0] - 2025-10-31
 
 ### Added
