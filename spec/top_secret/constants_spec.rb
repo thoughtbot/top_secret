@@ -3,6 +3,8 @@
 RSpec.describe "TopSecret::PHONE_REGEX" do
   phone_numbers = [
     "+1 415-555-1234",
+    "+1 (415) 555-1234",
+    "1 (415) 555-1234",
     "(415) 555-1234",
     "415.555.1234",
     "415 555 1234",
@@ -13,5 +15,29 @@ RSpec.describe "TopSecret::PHONE_REGEX" do
     it "matches #{phone_number}" do
       expect(phone_number).to match(TopSecret::PHONE_REGEX)
     end
+  end
+
+  bad_phone_numbers = [
+    "555) 555-5555",
+    "(555 555-5555",
+    "415+555+1234",
+    "(555 ) 555-5555",
+    ")555( 555-5555",
+    "(415)  555-1234"
+  ]
+
+  bad_phone_numbers.each do |phone_number|
+    it "does not match #{phone_number}" do
+      expect(phone_number).not_to match(TopSecret::PHONE_REGEX)
+    end
+  end
+
+  it "matches embedded parenthesized number and preserves mapping" do
+    input = "My phone number is (555) 555-5555"
+    output = input.gsub(TopSecret::PHONE_REGEX) { "[PHONE_NUMBER_1]" }
+    phone_number = input.match(TopSecret::PHONE_REGEX)[0]
+
+    expect(output).to eq("My phone number is [PHONE_NUMBER_1]")
+    expect(phone_number).to eq("(555) 555-5555")
   end
 end
