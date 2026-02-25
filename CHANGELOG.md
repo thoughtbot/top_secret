@@ -3,6 +3,7 @@
 ### Changed
 
 -   **BREAKING:** Added strict label validation for custom filters. Labels must now start and end with letters and contain only alphabetic characters and single underscores (no consecutive underscores, digits, or special characters). Previously malformed labels will now raise `Error::MalformedLabel`.
+-   Replaced `ActiveSupport::Configurable` with `mattr_accessor` for upcoming `Configurable` deprecation in Rails 8.2.
 
 ### Migration Guide
 

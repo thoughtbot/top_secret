@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
 # dependencies
-require "active_support/configurable"
-require "active_support/ordered_options"
+require "active_support/core_ext/module/attribute_accessors"
 require "mitie"
 
 # modules
@@ -44,17 +43,21 @@ require_relative "top_secret/filtered_text"
 # @!attribute [rw] location_filter
 #   @return [TopSecret::Filters::NER] filter for location names
 module TopSecret
-  include ActiveSupport::Configurable
+  mattr_accessor :model_path, default: MODEL_PATH
+  mattr_accessor :min_confidence_score, default: MIN_CONFIDENCE_SCORE
 
-  config_accessor :model_path, default: MODEL_PATH
-  config_accessor :min_confidence_score, default: MIN_CONFIDENCE_SCORE
+  mattr_accessor :custom_filters, default: []
 
-  config_accessor :custom_filters, default: []
+  mattr_accessor :credit_card_filter, default: TopSecret::Filters::Regex.new(label: "CREDIT_CARD", regex: CREDIT_CARD_REGEX)
+  mattr_accessor :email_filter, default: TopSecret::Filters::Regex.new(label: "EMAIL", regex: EMAIL_REGEX)
+  mattr_accessor :phone_number_filter, default: TopSecret::Filters::Regex.new(label: "PHONE_NUMBER", regex: PHONE_REGEX)
+  mattr_accessor :ssn_filter, default: TopSecret::Filters::Regex.new(label: "SSN", regex: SSN_REGEX)
+  mattr_accessor :people_filter, default: TopSecret::Filters::NER.new(label: "PERSON", tag: :person)
+  mattr_accessor :location_filter, default: TopSecret::Filters::NER.new(label: "LOCATION", tag: :location)
 
-  config_accessor :credit_card_filter, default: TopSecret::Filters::Regex.new(label: "CREDIT_CARD", regex: CREDIT_CARD_REGEX)
-  config_accessor :email_filter, default: TopSecret::Filters::Regex.new(label: "EMAIL", regex: EMAIL_REGEX)
-  config_accessor :phone_number_filter, default: TopSecret::Filters::Regex.new(label: "PHONE_NUMBER", regex: PHONE_REGEX)
-  config_accessor :ssn_filter, default: TopSecret::Filters::Regex.new(label: "SSN", regex: SSN_REGEX)
-  config_accessor :people_filter, default: TopSecret::Filters::NER.new(label: "PERSON", tag: :person)
-  config_accessor :location_filter, default: TopSecret::Filters::NER.new(label: "LOCATION", tag: :location)
+  class << self
+    def configure
+      yield self
+    end
+  end
 end
