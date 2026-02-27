@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "active_support/core_ext/hash/keys"
+require "active_support/core_ext/object/blank"
 require_relative "null_model"
 require_relative "text/result"
 require_relative "text/batch_result"
