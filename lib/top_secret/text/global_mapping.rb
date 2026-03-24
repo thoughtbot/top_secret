@@ -50,11 +50,11 @@ module TopSecret
       # @param individual_key [Symbol] The individual key from a filter result
       # @return [Symbol] The global key with consistent numbering
       def generate_global_key(individual_key)
-        label_type = individual_key.to_s.rpartition("_").first
+        label_type = individual_key.to_s.rpartition(TopSecret::LABEL_DELIMITER).first
 
         label_counters[label_type] ||= 0
         label_counters[label_type] += 1
-        :"#{label_type}_#{label_counters[label_type]}"
+        :"#{label_type}#{TopSecret::LABEL_DELIMITER}#{label_counters[label_type]}"
       end
     end
   end

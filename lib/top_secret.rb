@@ -7,6 +7,7 @@ require "mitie"
 # modules
 require_relative "top_secret/version"
 require_relative "top_secret/constants"
+require_relative "top_secret/category"
 require_relative "top_secret/mapping"
 require_relative "top_secret/filters/ner"
 require_relative "top_secret/filters/regex"
