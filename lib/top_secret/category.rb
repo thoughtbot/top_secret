@@ -25,13 +25,19 @@ module TopSecret
     # @param filters [Array<TopSecret::Filters::Regex, TopSecret::Filters::NER>] active filters
     # @return [Array<Category>] unique categories derived from the mapping and filters
     def self.from(mapping:, filters:)
-      types_from_mapping = mapping.keys.map do |key|
-        key.to_s.rpartition(TopSecret::LABEL_DELIMITER).first.downcase
-      end
+      types_from_mapping = mapping.keys.map { |key| type_from_key(key).downcase }
 
       types_from_filters = filters.map { |filter| filter.label.downcase }
 
       (types_from_mapping + types_from_filters).uniq.map { |type| new(type) }
+    end
+
+    # Extracts the label type from a key symbol.
+    #
+    # @param key [Symbol] a label key (e.g., :EMAIL_1, :CREDIT_CARD_2)
+    # @return [String] the label type (e.g., "EMAIL", "CREDIT_CARD")
+    def self.type_from_key(key)
+      key.to_s.rpartition(TopSecret::LABEL_DELIMITER).first
     end
 
     # @param type [String, Symbol] the category type

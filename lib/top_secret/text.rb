@@ -7,6 +7,7 @@ require_relative "text/result"
 require_relative "text/batch_result"
 require_relative "text/scan_result"
 require_relative "text/global_mapping"
+require_relative "text/label_sequence"
 
 module TopSecret
   # Processes text to identify and redact sensitive information using configured filters.

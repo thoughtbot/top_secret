@@ -16,7 +16,7 @@ module TopSecret
       # Creates a new GlobalMapping instance
       def initialize
         @mapping = {}
-        @label_counters = {}
+        @sequence = LabelSequence.new
       end
 
       # Builds the global mapping by processing all individual results
@@ -32,7 +32,7 @@ module TopSecret
       private
 
       attr_reader :mapping
-      attr_reader :label_counters
+      attr_reader :sequence
 
       # Processes a single result, adding new values to the global mapping
       #
@@ -41,20 +41,9 @@ module TopSecret
         result.mapping.each do |individual_key, value|
           next if mapping.key?(value)
 
-          mapping[value] = generate_global_key(individual_key)
+          label_type = Category.type_from_key(individual_key)
+          mapping[value] = sequence.next_label(label_type)
         end
-      end
-
-      # Generates a consistent global key for a given individual key
-      #
-      # @param individual_key [Symbol] The individual key from a filter result
-      # @return [Symbol] The global key with consistent numbering
-      def generate_global_key(individual_key)
-        label_type = individual_key.to_s.rpartition(TopSecret::LABEL_DELIMITER).first
-
-        label_counters[label_type] ||= 0
-        label_counters[label_type] += 1
-        :"#{label_type}#{TopSecret::LABEL_DELIMITER}#{label_counters[label_type]}"
       end
     end
   end

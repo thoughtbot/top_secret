@@ -51,6 +51,13 @@ RSpec.describe TopSecret::Category do
     end
   end
 
+  describe ".type_from_key" do
+    it "extracts the label type from a key" do
+      expect(described_class.type_from_key(:EMAIL_1)).to eq("EMAIL")
+      expect(described_class.type_from_key(:CREDIT_CARD_2)).to eq("CREDIT_CARD")
+    end
+  end
+
   describe ".from" do
     it "builds categories from a mapping and filters" do
       mapping = {EMAIL_1: "ralph@example.com", PERSON_1: "Ralph"}
