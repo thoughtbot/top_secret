@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [1.0.0] - 2026-03-25
+
 ### Added
 
 -   Added category methods to `Result` for querying specific types of sensitive information (e.g., `emails`, `emails?`, `email_mapping`)
