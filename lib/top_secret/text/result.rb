@@ -45,10 +45,13 @@ module TopSecret
       # @param global_mapping [Hash] Global mapping from filter labels to original values
       # @return [Array<Result>] Array of Result objects with globally consistent redaction and individual mappings
       def self.with_global_labels(individual_results, global_mapping)
+        value_to_label = global_mapping.each_with_object({}) do |(filter, value), hash|
+          hash[value] = "[#{filter}]"
+        end
+        pattern = Regexp.union(value_to_label.keys)
+
         individual_results.map do |result|
-          output = global_mapping.reduce(result.input.dup) do |text, (filter, value)|
-            text.gsub(value, "[#{filter}]")
-          end
+          output = result.input.gsub(pattern, value_to_label)
           filter_keys = output.scan(/\[([^\]]+)\]/).flatten.map(&:to_sym)
           mapping = global_mapping.slice(*filter_keys)
           new(result.input, output, mapping)

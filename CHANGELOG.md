@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+### Fixed
+
+-   Fixed malformed output when a redacted label contains text that matches another filter (e.g., `MA` inside `[EMAIL_1]` being re-filtered to `[E[LOCATION_2]IL_1]`)
+
 ## [1.0.0] - 2026-03-25
 
 ### Added
