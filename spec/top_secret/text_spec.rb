@@ -43,6 +43,41 @@ RSpec.describe TopSecret::Text do
       expect(result.safe?).to eq(false)
     end
 
+    context "when a label matches a filter" do
+      let(:ma) { build_entity(text: "MA", tag: :location) }
+      let(:boston) { build_entity(text: "Boston", tag: :location) }
+
+      before do
+        stub_ner_entities(boston, ma)
+      end
+
+      it "does not re-filter labels" do
+        input = "Build a profile for a person with email user@example.com located in Boston, MA."
+
+        result = TopSecret::Text.filter(input)
+
+        expect(result.output).to eq(
+          "Build a profile for a person with email [EMAIL_1] located in [LOCATION_1], [LOCATION_2]."
+        )
+      end
+    end
+
+    context "when a custom filter matches the same value as a default filter" do
+      it "uses the custom filter's label" do
+        custom_filter = TopSecret::Filters::Regex.new(
+          label: "CUSTOM_EMAIL",
+          regex: /user@example\.com/
+        )
+
+        result = TopSecret::Text.filter(
+          "Contact user@example.com",
+          custom_filters: [custom_filter]
+        )
+
+        expect(result.output).to eq("Contact [CUSTOM_EMAIL_1]")
+      end
+    end
+
     it "categorizes sensitive information from free text" do
       input = <<~TEXT
         My name is Ralph
@@ -727,6 +762,30 @@ RSpec.describe TopSecret::Text do
         expect(result.items.map(&:location_mapping)).to all(be_empty)
 
         expect(result.items.map(&:categories)).to all(be_empty)
+      end
+    end
+
+    context "when a label matches a filter" do
+      before do
+        ma = build_entity(text: "MA", tag: :location)
+        boston = build_entity(text: "Boston", tag: :location)
+        stub_ner_entities(boston, ma)
+      end
+
+      it "does not re-filter labels" do
+        messages = [
+          "Email user@example.com in Boston, MA.",
+          "Contact admin@example.com in Boston."
+        ]
+
+        result = TopSecret::Text.filter_all(messages)
+
+        expect(result.items[0].output).to eq(
+          "Email [EMAIL_1] in [LOCATION_1], [LOCATION_2]."
+        )
+        expect(result.items[1].output).to eq(
+          "Contact [EMAIL_2] in [LOCATION_1]."
+        )
       end
     end
 

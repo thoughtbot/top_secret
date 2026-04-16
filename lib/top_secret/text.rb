@@ -214,9 +214,13 @@ module TopSecret
     #
     # @return [void]
     def substitute_text
-      mapping.each do |filter, value|
-        output.gsub! value, "[#{filter}]"
+      return if mapping.empty?
+
+      value_to_label = mapping.each_with_object({}) do |(filter, value), hash|
+        hash[value] = "[#{filter}]"
       end
+      pattern = Regexp.union(value_to_label.keys)
+      output.gsub!(pattern, value_to_label)
     end
 
     # Collects all filters to apply: default filters with overrides plus custom filters
