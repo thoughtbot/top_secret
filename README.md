@@ -15,6 +15,11 @@ By default it filters the following:
 
 However, you can add your own [custom filters](#custom-filters).
 
+> [!TIP]
+> Using [RubyLLM][]? Check out [ruby_llm-top_secret][] for seamless integration
+  that automatically filters sensitive information from your prompts before
+  sending them to LLMs.
+
 ## Installation
 
 Install the gem and add to the application's Gemfile by executing:
@@ -841,3 +846,5 @@ We are [available for hire][hire].
 [Regex filters]: https://github.com/thoughtbot/top_secret/blob/main/lib/top_secret/filters/regex.rb
 [NER filters]: https://github.com/thoughtbot/top_secret/blob/main/lib/top_secret/filters/ner.rb
 [discussions_60]: https://github.com/thoughtbot/top_secret/discussions/60
+[RubyLLM]: https://github.com/crmne/ruby_llm
+[ruby_llm-top_secret]: https://github.com/thoughtbot/ruby_llm-top_secret
