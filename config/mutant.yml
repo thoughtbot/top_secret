@@ -1,0 +1,11 @@
+---
+usage: opensource
+includes:
+  - lib
+requires:
+  - top_secret
+integration:
+  name: rspec
+matcher:
+  subjects:
+    - TopSecret*
