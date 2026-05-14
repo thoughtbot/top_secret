@@ -62,6 +62,59 @@ RSpec.describe TopSecret::Text do
       end
     end
 
+    context "when the same value matches multiple filters" do
+      let(:austin_person) { build_entity(text: "Austin", tag: :person) }
+      let(:austin_location) { build_entity(text: "Austin", tag: :location) }
+
+      before do
+        stub_ner_entities(austin_person, austin_location)
+      end
+
+      it "labels each occurrence according to the filter that matched it" do
+        input = "My name is Austin, and I live in Austin TX."
+
+        result = TopSecret::Text.filter(input)
+
+        expect(result.output).to eq(
+          "My name is [PERSON_1], and I live in [LOCATION_1] TX."
+        )
+        expect(result.mapping).to eq({
+          PERSON_1: "Austin",
+          LOCATION_1: "Austin"
+        })
+      end
+    end
+
+    context "when the same value matches multiple non-NER filters" do
+      before do
+        stub_ner_entities
+      end
+
+      it "labels each occurrence according to the filter that matched it" do
+        ip_filter = TopSecret::Filters::Regex.new(
+          label: "IP_ADDRESS",
+          regex: /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/
+        )
+        server_filter = TopSecret::Filters::Regex.new(
+          label: "SERVER",
+          regex: /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/
+        )
+
+        result = TopSecret::Text.filter(
+          "Primary 192.168.1.1, backup 192.168.1.1.",
+          custom_filters: [ip_filter, server_filter]
+        )
+
+        expect(result.output).to eq(
+          "Primary [IP_ADDRESS_1], backup [SERVER_1]."
+        )
+        expect(result.mapping).to eq({
+          IP_ADDRESS_1: "192.168.1.1",
+          SERVER_1: "192.168.1.1"
+        })
+      end
+    end
+
     context "when a custom filter matches the same value as a default filter" do
       it "uses the custom filter's label" do
         custom_filter = TopSecret::Filters::Regex.new(

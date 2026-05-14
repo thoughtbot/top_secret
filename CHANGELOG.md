@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+### Fixed
+
+-   Fixed incorrect labeling when multiple filters match the same token. Each occurrence is now labeled by the filter that matched it (e.g., `"My name is Austin, and I live in Austin TX."` now redacts to `"My name is [PERSON_1], and I live in [LOCATION_1] TX."` instead of labeling both occurrences with the last filter to match).
+
 ## [1.0.1] - 2026-04-16
 
 ### Fixed

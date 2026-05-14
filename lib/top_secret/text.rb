@@ -216,11 +216,23 @@ module TopSecret
     def substitute_text
       return if mapping.empty?
 
-      value_to_label = mapping.each_with_object({}) do |(filter, value), hash|
-        hash[value] = "[#{filter}]"
+      value_to_labels = mapping.each_with_object({}) do |(filter, value), hash|
+        (hash[value] ||= []) << "[#{filter}]"
       end
-      pattern = Regexp.union(value_to_label.keys)
-      output.gsub!(pattern, value_to_label)
+
+      single_label, multi_label = value_to_labels.partition { |_, labels| labels.size == 1 }.map(&:to_h)
+
+      unless single_label.empty?
+        value_to_label = single_label.transform_values(&:first)
+        pattern = Regexp.union(value_to_label.keys)
+        output.gsub!(pattern, value_to_label)
+      end
+
+      multi_label.each do |value, labels|
+        occurrences = output.scan(value).size
+        chosen = occurrences.positive? ? labels.last(occurrences) : labels.last(1)
+        chosen.each { |label| output.sub!(value, label) }
+      end
     end
 
     # Collects all filters to apply: default filters with overrides plus custom filters
