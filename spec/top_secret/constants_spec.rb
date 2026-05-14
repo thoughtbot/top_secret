@@ -13,5 +13,25 @@ RSpec.describe "TopSecret::PHONE_REGEX" do
     it "matches #{phone_number}" do
       expect(phone_number).to match(TopSecret::PHONE_REGEX)
     end
+
+    it "captures the full #{phone_number} (no leading/trailing chars left behind)" do
+      match = phone_number.match(TopSecret::PHONE_REGEX)
+
+      expect(match[0]).to eq(phone_number)
+    end
+  end
+
+  context "when embedded in surrounding text" do
+    it "captures the leading paren" do
+      input = "My phone number is (555) 555-5555"
+
+      match = input.match(TopSecret::PHONE_REGEX)
+
+      expect(match[0]).to eq("(555) 555-5555")
+    end
+  end
+
+  it "does not match a longer digit run" do
+    expect("12345678901234").not_to match(TopSecret::PHONE_REGEX)
   end
 end
