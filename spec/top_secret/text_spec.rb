@@ -85,6 +85,25 @@ RSpec.describe TopSecret::Text do
       end
     end
 
+    context "when the same value appears more times than the filters that matched it" do
+      let(:austin_person) { build_entity(text: "Austin", tag: :person) }
+      let(:austin_location) { build_entity(text: "Austin", tag: :location) }
+
+      before do
+        stub_ner_entities(austin_person, austin_location)
+      end
+
+      it "redacts every occurrence, falling back to the last matching filter's label" do
+        input = "Austin met Austin near Austin."
+
+        result = TopSecret::Text.filter(input)
+
+        expect(result.output).to eq(
+          "[PERSON_1] met [LOCATION_1] near [LOCATION_1]."
+        )
+      end
+    end
+
     context "when the same value matches multiple non-NER filters" do
       before do
         stub_ner_entities

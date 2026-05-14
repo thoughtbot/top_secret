@@ -58,7 +58,8 @@ module TopSecret
         occurrences = output.scan(value).size
         return labels.last(1) if occurrences.zero?
 
-        labels.last(occurrences)
+        chosen = labels.last(occurrences)
+        chosen + Array.new(occurrences - chosen.size, labels.last)
       end
     end
   end
