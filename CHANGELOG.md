@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+### Fixed
+
+-   `PHONE_REGEX` now captures the leading `(` when a parenthesized phone number is embedded in surrounding text (e.g., `"My phone number is (555) 555-5555"`). Previously the `\b` word boundary refused to anchor before `(`, leaving the paren behind in the source string.
+
 ## [1.0.1] - 2026-04-16
 
 ### Fixed
