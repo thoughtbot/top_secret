@@ -21,12 +21,14 @@ RSpec.describe "TopSecret::PHONE_REGEX" do
     end
   end
 
-  it "captures the leading paren when embedded in surrounding text" do
-    input = "My phone number is (555) 555-5555"
+  context "when embedded in surrounding text" do
+    it "captures the leading paren" do
+      input = "My phone number is (555) 555-5555"
 
-    match = input.match(TopSecret::PHONE_REGEX)
+      match = input.match(TopSecret::PHONE_REGEX)
 
-    expect(match[0]).to eq("(555) 555-5555")
+      expect(match[0]).to eq("(555) 555-5555")
+    end
   end
 
   it "does not match a longer digit run" do
