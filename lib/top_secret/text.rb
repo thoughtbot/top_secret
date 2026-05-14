@@ -8,6 +8,7 @@ require_relative "text/batch_result"
 require_relative "text/scan_result"
 require_relative "text/global_mapping"
 require_relative "text/label_sequence"
+require_relative "text/substitution"
 
 module TopSecret
   # Processes text to identify and redact sensitive information using configured filters.
@@ -214,25 +215,7 @@ module TopSecret
     #
     # @return [void]
     def substitute_text
-      return if mapping.empty?
-
-      value_to_labels = mapping.each_with_object({}) do |(filter, value), hash|
-        (hash[value] ||= []) << "[#{filter}]"
-      end
-
-      single_label, multi_label = value_to_labels.partition { |_, labels| labels.size == 1 }.map(&:to_h)
-
-      unless single_label.empty?
-        value_to_label = single_label.transform_values(&:first)
-        pattern = Regexp.union(value_to_label.keys)
-        output.gsub!(pattern, value_to_label)
-      end
-
-      multi_label.each do |value, labels|
-        occurrences = output.scan(value).size
-        chosen = occurrences.positive? ? labels.last(occurrences) : labels.last(1)
-        chosen.each { |label| output.sub!(value, label) }
-      end
+      Substitution.new(mapping).apply!(output)
     end
 
     # Collects all filters to apply: default filters with overrides plus custom filters
