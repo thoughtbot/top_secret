@@ -17,8 +17,14 @@ module TopSecret
     (?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*
   }x
 
-  # @return [Regexp] Matches phone numbers with optional country code
-  PHONE_REGEX = /\b(?:\+\d{1,2}\s)?\(?\d{3}\)?[\s+.-]\d{3}[\s+.-]\d{4}\b/
+  # @return [Regexp] Matches phone numbers with optional country code.
+  #
+  # Uses digit-only lookaround anchors instead of `\b` so an optional
+  # leading `(` is included in the match. `\b` is a word-boundary
+  # assertion and `(` is a non-word character, so a leading `\b` would
+  # refuse to anchor before `(` and the engine would start the match at
+  # the first digit, leaving the `(` behind in the source text.
+  PHONE_REGEX = /(?<!\d)(?:\+\d{1,2}\s)?\(?\d{3}\)?[\s+.-]\d{3}[\s+.-]\d{4}(?!\d)/
 
   # @return [Regexp] Matches Social Security Numbers in common formats
   SSN_REGEX = /\b\d{3}[\s+-]\d{2}[\s+-]\d{4}\b/
