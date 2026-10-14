@@ -83,6 +83,20 @@ RSpec.describe TopSecret::FilteredText do
       end
     end
 
+    context "when an unrestored filter has a multi-digit index" do
+      it "returns it in the list of filters that could not be restored" do
+        person = "Ralph"
+        mapping = {PERSON_10: person}
+        llm_response = "Hello, [PERSON_10] and [PERSON_12]!"
+
+        result = TopSecret::FilteredText.restore(llm_response, mapping:)
+
+        expect(result.output).to eq("Hello, #{person} and [PERSON_12]!")
+        expect(result.unrestored).to eq(["[PERSON_12]"])
+        expect(result.restored).to eq(["[PERSON_10]"])
+      end
+    end
+
     context "when the same filter appears multiple times" do
       it "does not duplicate filters in the restored list" do
         person = "Ralph"

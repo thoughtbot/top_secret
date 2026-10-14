@@ -52,7 +52,7 @@ module TopSecret
         end
       end
 
-      unrestored = output.scan(/\[\w*_\d\]/)
+      unrestored = output.scan(/\[\w*_\d+\]/)
 
       Result.new(output, unrestored, restored)
     end

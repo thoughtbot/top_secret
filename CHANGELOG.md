@@ -2,6 +2,7 @@
 
 ### Fixed
 
+-   `TopSecret::FilteredText.restore` now reports unrestored placeholders with a multi-digit index (e.g., `[PERSON_12]`). Previously the scan matched a single digit only, so those placeholders were left in the output but missing from `unrestored`.
 -   `PHONE_REGEX` now captures the leading `(` when a parenthesized phone number is embedded in surrounding text (e.g., `"My phone number is (555) 555-5555"`). Previously the `\b` word boundary refused to anchor before `(`, leaving the paren behind in the source string.
 
 ## [1.0.1] - 2026-04-16
